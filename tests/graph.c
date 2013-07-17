@@ -22,9 +22,9 @@ int main(int argc, char **argv)
 
 	/* test adding new points and check point_count is increasing */
 	assert(graph_point_count(g) == 0);
-	assert(graph_add_point(g, 1234, 987654) == 0);
+	assert(graph_add_point(g, 1, 10) == 0);
 	assert(graph_point_count(g) == 1);
-	assert(graph_add_point(g, 4567, 1234586789) == 0);
+	assert(graph_add_point(g, 5, 20) == 0);
 	assert(graph_point_count(g) == 2);
 
 	/* fetch the points one way and compare them with the other way */
@@ -36,6 +36,13 @@ int main(int argc, char **argv)
 	assert(p == p0);
 	p = graph_read_next(g, p);
 	assert(p == p1);
+
+	/* test integrals */
+	assert(graph_integral(g, 0, 1) == 0);
+	assert(graph_integral(g, 1, 2) == 10);
+	assert(graph_integral(g, 1, 3) == 20);
+	assert(graph_integral(g, 2, 3) == 10);
+	assert(graph_integral(g, 0, 8) == 100);
 
 	/* Check that reading out of bounds again but with a non-empty list */
 	assert(graph_read_next(g, p) == NULL);

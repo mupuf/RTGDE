@@ -10,6 +10,7 @@ extern "C" {
 
 #define GRAPH_MAX_POINT_COUNT USHRT_MAX
 
+typedef uint64_t graph_integral_t;
 typedef uint64_t graph_time_t;
 typedef uint32_t graph_value_t;
 typedef uint16_t graph_index_t;
@@ -33,6 +34,8 @@ const graph_point_t * graph_read_first(const graph_t *g);
 const graph_point_t * graph_read_next(const graph_t *g, const graph_point_t *point);
 
 graph_index_t graph_point_count(const graph_t *g);
+graph_integral_t graph_integral(const graph_t *g, graph_time_t start,
+						  graph_time_t end);
 
 void graph_delete(graph_t *g);
 

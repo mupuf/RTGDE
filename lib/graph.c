@@ -93,6 +93,34 @@ graph_index_t graph_point_count(const graph_t *g)
 	return g_priv->point_count;
 }
 
+graph_integral_t graph_integral(const graph_t *g, graph_time_t start,
+						  graph_time_t end)
+{
+	graph_priv_t *g_priv = graph_priv(g);
+	graph_value_t old_value = 0, old_time = start;
+	graph_integral_t g_int = 0;
+
+	graph_point_priv_t *pos;
+	list_for_each_entry(pos, &g_priv->point_lst, list) {
+		if (pos->base.time > start) {
+			if (pos->base.time > end)
+				g_int += (end - start) * old_value;
+			else
+				g_int += (pos->base.time - old_time) * old_value;
+
+			if (pos->base.time >= end)
+				return g_int;
+
+			old_time = pos->base.time;
+		}
+		old_value = pos->base.value;
+	}
+
+	/* keep the old value and kee on integrating */
+	g_int += (end - old_time) * old_value;
+	return g_int;
+}
+
 void graph_delete(graph_t *g)
 {
 	graph_priv_t *g_priv = graph_priv(g);
