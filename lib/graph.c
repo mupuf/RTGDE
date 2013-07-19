@@ -1,6 +1,6 @@
 #include "graph_priv.h"
 
-graph_point_priv_t *graph_point_priv(const graph_point_t *p)
+graph_point_priv_t *graph_point_priv(const sample_t *p)
 {
 	return (graph_point_priv_t *)p;
 }
@@ -24,7 +24,7 @@ graph_t * graph_create()
 	return g;
 }
 
-int graph_add_point(graph_t *g, graph_time_t time, graph_value_t value)
+int graph_add_point(graph_t *g, sample_time_t time, sample_value_t value)
 {
 	graph_point_priv_t *priv = malloc(sizeof(graph_point_priv_t));
 	if (!priv)
@@ -40,7 +40,7 @@ int graph_add_point(graph_t *g, graph_time_t time, graph_value_t value)
 	return 0;
 }
 
-const graph_point_t * graph_read_point(const graph_t *g, graph_index_t index)
+const sample_t * graph_read_point(const graph_t *g, graph_index_t index)
 {
 	graph_priv_t *g_priv = graph_priv(g);
 	graph_point_priv_t *pos;
@@ -48,14 +48,14 @@ const graph_point_t * graph_read_point(const graph_t *g, graph_index_t index)
 	graph_index_t i = 0;
 	list_for_each_entry(pos, &g_priv->point_lst, list) {
 		if (i == index)
-			return (graph_point_t *) pos;
+			return (sample_t *) pos;
 		i++;
 	}
 
 	return NULL;
 }
 
-const graph_point_t * graph_read_first(const graph_t *g)
+const sample_t * graph_read_first(const graph_t *g)
 {
 	graph_priv_t *g_priv = graph_priv(g);
 
@@ -65,10 +65,10 @@ const graph_point_t * graph_read_first(const graph_t *g)
 	graph_point_priv_t *p;
 	p = container_of(g_priv->point_lst.next, graph_point_priv_t, list);
 
-	return (graph_point_t *)p;
+	return (sample_t *)p;
 }
 
-const graph_point_t * graph_read_next(const graph_t *g, const graph_point_t *point)
+const sample_t * graph_read_next(const graph_t *g, const sample_t *point)
 {
 	graph_priv_t *g_priv = graph_priv(g);
 
@@ -83,7 +83,7 @@ const graph_point_t * graph_read_next(const graph_t *g, const graph_point_t *poi
 
 	new_priv = container_of(p_priv->list.next, graph_point_priv_t, list);
 
-	return (graph_point_t *)new_priv;
+	return (sample_t *)new_priv;
 }
 
 graph_index_t graph_point_count(const graph_t *g)
@@ -93,11 +93,11 @@ graph_index_t graph_point_count(const graph_t *g)
 	return g_priv->point_count;
 }
 
-graph_integral_t graph_integral(const graph_t *g, graph_time_t start,
-						  graph_time_t end)
+graph_integral_t graph_integral(const graph_t *g, sample_time_t start,
+						  sample_time_t end)
 {
 	graph_priv_t *g_priv = graph_priv(g);
-	graph_value_t old_value = 0, old_time = start;
+	sample_value_t old_value = 0, old_time = start;
 	graph_integral_t g_int = 0;
 
 	graph_point_priv_t *pos;
@@ -133,4 +133,3 @@ void graph_delete(graph_t *g)
 
 	free(g);
 }
-

@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-void print_point(const graph_point_t *p)
+void print_point(const sample_t *p)
 {
 	printf("[%llu, %u]", (unsigned long long)p->time, p->value);
 }
@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 	int i;
 
 	/* test that fetching points from an empty graph will always return NULL */
-	const graph_point_t * p = graph_read_first(g);
+	const sample_t * p = graph_read_first(g);
 	assert(p == NULL);
 	p = graph_read_next(g, p);
 	assert(p == NULL);
@@ -28,9 +28,9 @@ int main(int argc, char **argv)
 	assert(graph_point_count(g) == 2);
 
 	/* fetch the points one way and compare them with the other way */
-	const graph_point_t * p0 = graph_read_point(g, 0);
+	const sample_t * p0 = graph_read_point(g, 0);
 	assert(p0 != NULL);
-	const graph_point_t * p1 = graph_read_point(g, 1);
+	const sample_t * p1 = graph_read_point(g, 1);
 	assert(p1 != NULL);
 	p = graph_read_first(g);
 	assert(p == p0);
