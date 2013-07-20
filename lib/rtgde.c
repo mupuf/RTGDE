@@ -28,12 +28,12 @@ typedef struct {
 	uint64_t update_period_us;
 } flowgraph_priv_t;
 
-flowgraph_priv_t *flowgraph_priv(const flowgraph_t *p)
+flowgraph_priv_t *flowgraph_priv(const flowgraph_t *f)
 {
-	return (flowgraph_priv_t *) p;
+	return (flowgraph_priv_t *) f;
 }
 
-static uint64_t clock_read_us()
+int64_t clock_read_us()
 {
 	struct timespec tp;
 	if (clock_gettime(CLOCK_REALTIME, &tp))
@@ -89,11 +89,35 @@ flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns)
 	return (flowgraph_t *)f;
 }
 
-void flowgraph_teardown(flowgraph_t *f)
+int flowgraph_attach_metric(flowgraph_t *f, metric_t * m)
 {
-	rtgde_stop(f);
-	free((char *)f->name);
-	free(f);
+	flowgraph_metric_t *fm = malloc(sizeof(flowgraph_metric_t));
+	if (!fm)
+		return -1;
+
+	fm->base = m;
+
+	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+	list_add_tail(&fm->list, &f_priv->metrics);
+
+	return 0;
+}
+
+int flowgraph_detach_metric(flowgraph_t *f, metric_t * m)
+{
+	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+	flowgraph_metric_t *pos, *n;
+
+	/* free the metrics list */
+	list_for_each_entry_safe(pos, n, &f_priv->metrics, list) {
+		if (pos->base == m) {
+			list_del(&(pos->list));
+			free(pos);
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
 int rtgde_start(flowgraph_t *f)
@@ -117,4 +141,21 @@ int rtgde_stop(flowgraph_t *f)
 		return s;
 
 	return 0;
+}
+
+void flowgraph_teardown(flowgraph_t *f)
+{
+	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+	flowgraph_metric_t *pos, *n;
+
+	rtgde_stop(f);
+	free((char *)f->name);
+
+	/* free the metrics list */
+	list_for_each_entry_safe(pos, n, &f_priv->metrics, list) {
+		list_del(&(pos->list));
+		free(pos);
+	}
+
+	free(f);
 }

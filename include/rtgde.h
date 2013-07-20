@@ -18,6 +18,11 @@ typedef struct {
 flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns);
 void flowgraph_teardown(flowgraph_t *f);
 
+int64_t clock_read_us();
+
+int flowgraph_attach_metric(flowgraph_t *f, metric_t * m);
+int flowgraph_detach_metric(flowgraph_t *f, metric_t * m);
+
 int rtgde_start(flowgraph_t *f);
 int rtgde_stop(flowgraph_t *f);
 

@@ -12,8 +12,7 @@ graph_priv_t *graph_priv(const graph_t *g)
 
 graph_t * graph_create()
 {
-	graph_t * g = malloc(sizeof(graph_priv_t));
-	graph_priv_t *g_priv = graph_priv(g);
+	graph_priv_t * g_priv = malloc(sizeof(graph_priv_t));
 
 	if (!g_priv)
 		return NULL;
@@ -21,7 +20,7 @@ graph_t * graph_create()
 	INIT_LIST_HEAD(&g_priv->point_lst);
 	g_priv->point_count = 0;
 
-	return g;
+	return (graph_t *)g_priv;
 }
 
 int graph_add_point(graph_t *g, sample_time_t time, sample_value_t value)
