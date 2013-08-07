@@ -20,8 +20,11 @@ void flowgraph_teardown(flowgraph_t *f);
 
 int64_t clock_read_us();
 
-int flowgraph_attach_metric(flowgraph_t *f, metric_t * m);
-int flowgraph_detach_metric(flowgraph_t *f, metric_t * m);
+int flowgraph_attach_prediction(flowgraph_t *f, prediction_t * p);
+int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p);
+
+int flowgraph_attach_model(flowgraph_t *f, model_t * m);
+int flowgraph_detach_model(flowgraph_t *f, model_t * m);
 
 int rtgde_start(flowgraph_t *f);
 int rtgde_stop(flowgraph_t *f);

@@ -15,7 +15,7 @@ metric_t * metric_create(const char *name, history_size_t history_size)
 	if (!m_priv)
 		return NULL;
 
-	m_priv->base.name = strdup(name);
+	m_priv->name = strdup(name);
 
 	/* history */
 	pthread_mutex_init(&m_priv->history_mutex, NULL);
@@ -25,6 +25,12 @@ metric_t * metric_create(const char *name, history_size_t history_size)
 	m_priv->get = 0;
 
 	return (metric_t *)m_priv;
+}
+
+const char *metric_name(metric_t* m)
+{
+	metric_priv_t *m_priv = metric_priv(m);
+	return m_priv->name;
 }
 
 static history_size_t rb_next_index(history_size_t index, history_size_t history_size)
@@ -101,7 +107,7 @@ history_size_t metric_history_size(metric_t *m)
 void metric_delete(metric_t *m)
 {
 	metric_priv_t *m_priv = metric_priv(m);
-	free((char *)m_priv->base.name);
+	free((char *)m_priv->name);
 	free(m_priv->ring);
 	free(m_priv);
 }

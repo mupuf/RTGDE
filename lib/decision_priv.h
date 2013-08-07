@@ -1,0 +1,4 @@
+#ifndef DECISION_PRIV_H
+#define DECISION_PRIV_H
+
+#endif // DECISION_PRIV_H

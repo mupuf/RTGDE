@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	rtgde_start(f);
 
 	for (i = 0; i < 15; i++) {
-		metric_update(m, /*clock_read_us()*/0, i);
+		metric_update(m, /*clock_read_us()*/i, i);
 		metric_print_history(m);
 		usleep(1000);
 	}
