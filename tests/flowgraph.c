@@ -12,9 +12,9 @@ int main(int argc, char **argv)
 
 	flowgraph_t *f = flowgraph_create("nif selector", 1000000);
 
-	int ret = flowgraph_attach_metric(f, m);
-	if (ret)
-		return -1;
+	//int ret = flowgraph_attach_metric(f, m);
+//	if (ret)
+//		return -1;
 
 	rtgde_start(f);
 

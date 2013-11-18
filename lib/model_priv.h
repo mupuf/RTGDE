@@ -11,7 +11,7 @@ typedef struct {
 
 typedef struct {
 	model_output_t base;
-	struct list_head metrics;
+
 } model_output_priv_t;
 
 typedef struct {
