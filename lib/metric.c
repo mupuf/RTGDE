@@ -98,6 +98,22 @@ history_size_t metric_dump_history(metric_t *m, sample_t *buffer, history_size_t
 	return i;
 }
 
+sample_t metric_get_last(metric_t *m)
+{
+	metric_priv_t *m_priv = metric_priv(m);
+	history_size_t last;
+	sample_t s;
+
+	pthread_mutex_lock(&m_priv->history_mutex);
+	last = (m_priv->history_size + m_priv->put - 1) % m_priv->history_size;
+
+	s.time = m_priv->ring[last].time;
+	s.value = m_priv->ring[last].value;
+	pthread_mutex_unlock(&m_priv->history_mutex);
+
+	return s;
+}
+
 history_size_t metric_history_size(metric_t *m)
 {
 	metric_priv_t *m_priv = metric_priv(m);

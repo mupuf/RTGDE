@@ -107,6 +107,7 @@ flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns)
 		return NULL;
 
 	INIT_LIST_HEAD(&f->predictions);
+	INIT_LIST_HEAD(&f->models);
 	f->update_period_us = update_period_ns;
 	f->base.name = strdup(name);
 

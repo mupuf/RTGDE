@@ -10,7 +10,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 find_package (Threads REQUIRED)
 
-file(GLOB rtgde_SOURCES "lib/*.c" "lib/*.h" "include/*.h")
+file(GLOB rtgde_SOURCES "lib/*.c" "lib/prediction/*.c" "lib/*.h" "include/*.h")
 add_library (rtgde SHARED ${rtgde_SOURCES})
 set_property(TARGET rtgde PROPERTY VERSION 0.1.0)
 target_link_libraries (rtgde ${CMAKE_THREAD_LIBS_INIT})
