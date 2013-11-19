@@ -14,13 +14,14 @@
 
 typedef struct {
 	prediction_t *base;
+	prediction_output_t *last_prediction;
 
 	/* private declarations */
 	struct list_head list;
 } flowgraph_prediction_t;
 
 typedef struct {
-	prediction_t *base;
+	model_t *base;
 
 	/* private declarations */
 	struct list_head list;
@@ -28,6 +29,9 @@ typedef struct {
 
 typedef struct {
 	flowgraph_t base;
+
+	/* configuration */
+	pthread_mutex_t config_mutex;
 
 	/* private declarations */
 	struct list_head predictions;
@@ -52,29 +56,56 @@ int64_t clock_read_us()
 	return tp.tv_sec * 1000000ULL + tp.tv_nsec / 1000;
 }
 
-static void execute_flow_graph(flowgraph_priv_t *f)
+static void execute_flow_graph(flowgraph_priv_t *f_priv)
 {
-	/* reading the history of each metric */
+	flowgraph_prediction_t *pos_p;
+	flowgraph_model_t *pos_m;
 
-	/* feed the metrics to the prediction */
+	pthread_mutex_lock(&f_priv->config_mutex);
 
-	/* feed the ouput of prediction to each models */
+	/* do the predictions for all attached predictions */
+	list_for_each_entry(pos_p, &f_priv->predictions, list) {
+		pos_p->last_prediction = prediction_exec(pos_p->base);
+	}
+
+	/* feed the predictions to the models */
+	list_for_each_entry(pos_m, &f_priv->models, list) {
+		prediction_output_t *predictions = prediction_output_create();
+
+		/* unite all the predictions in one list */
+		list_for_each_entry(pos_p, &f_priv->predictions, list) {
+			prediction_output_append_list_copy(predictions,
+							   pos_p->last_prediction->metrics);
+		}
+
+		/* feed the ouput of prediction to each models */
+
+		/* predictions will be freed by model_output_delete() */
+	}
 
 	/* feed the output of each models to the scoring */
 
 	/* take a decision */
+
+	/* free all predictions */
+	list_for_each_entry(pos_p, &f_priv->predictions, list) {
+		prediction_output_delete(pos_p->last_prediction);
+		pos_p->last_prediction = NULL;
+	}
+
+	pthread_mutex_unlock(&f_priv->config_mutex);
 }
 
 static void *thread_flowgraph (void *p_data)
 {
-	flowgraph_priv_t *f = (flowgraph_priv_t *)p_data;
+	flowgraph_priv_t *f_priv = (flowgraph_priv_t *)p_data;
 	int s;
 
 	/* Get the clock */
 	int64_t next_wakeup = clock_read_us();
 
 	while (1) {
-		next_wakeup += f->update_period_us;
+		next_wakeup += f_priv->update_period_us;
 
 		/* disable cancelation while we are taking a decision */
 		s = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
@@ -82,7 +113,7 @@ static void *thread_flowgraph (void *p_data)
 			die(s, "pthread_setcancelstate");
 
 		/* real work */
-		execute_flow_graph(f);
+		execute_flow_graph(f_priv);
 
 		/* re-enable cancelation */
 		s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -106,6 +137,8 @@ flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns)
 	if (!f)
 		return NULL;
 
+	pthread_mutex_init(&f->config_mutex, NULL);
+
 	INIT_LIST_HEAD(&f->predictions);
 	INIT_LIST_HEAD(&f->models);
 	f->update_period_us = update_period_ns;
@@ -116,64 +149,94 @@ flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns)
 
 int flowgraph_attach_prediction(flowgraph_t *f, prediction_t * p)
 {
-	flowgraph_prediction_t *fp = malloc(sizeof(flowgraph_prediction_t));
-	if (!fp)
-		return -1;
+	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+	flowgraph_prediction_t *fp;
+	int ret = 0;
+
+	pthread_mutex_lock(&f_priv->config_mutex);
+
+	fp = malloc(sizeof(flowgraph_prediction_t));
+	if (!fp) {
+		ret = -1;
+		goto exit;
+	}
 
 	fp->base = p;
+	fp->last_prediction = NULL;
 
-	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 	list_add_tail(&fp->list, &f_priv->predictions);
 
-	return 0;
+exit:
+	pthread_mutex_unlock(&f_priv->config_mutex);
+	return ret;
 }
 
 int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 	flowgraph_prediction_t *pos, *n;
+	int ret = 0;
+
+	pthread_mutex_lock(&f_priv->config_mutex);
 
 	/* free the metrics list */
 	list_for_each_entry_safe(pos, n, &f_priv->predictions, list) {
 		if (pos->base == p) {
 			list_del(&(pos->list));
 			free(pos);
-			return 0;
+			goto exit;
 		}
 	}
+	ret = -1;
 
-	return -1;
+exit:
+	pthread_mutex_unlock(&f_priv->config_mutex);
+	return ret;
 }
 
 int flowgraph_attach_model(flowgraph_t *f, model_t * m)
 {
+	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+	int ret = 0;
+
+	pthread_mutex_lock(&f_priv->config_mutex);
+
 	flowgraph_model_t *fm = malloc(sizeof(flowgraph_model_t));
-	if (!fm)
-		return -1;
+	if (!fm) {
+		ret = -1;
+		goto exit;
+	}
 
 	fm->base = m;
 
-	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 	list_add_tail(&fm->list, &f_priv->models);
 
-	return 0;
+exit:
+	pthread_mutex_unlock(&f_priv->config_mutex);
+	return ret;
 }
 
 int flowgraph_detach_model(flowgraph_t *f, model_t * m)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 	flowgraph_model_t *pos, *n;
+	int ret = 0;
+
+	pthread_mutex_lock(&f_priv->config_mutex);
 
 	/* free the metrics list */
 	list_for_each_entry_safe(pos, n, &f_priv->models, list) {
 		if (pos->base == m) {
 			list_del(&(pos->list));
 			free(pos);
-			return 0;
+			goto exit;
 		}
 	}
+	ret = -1;
 
-	return -1;
+exit:
+	pthread_mutex_unlock(&f_priv->config_mutex);
+	return ret;
 }
 
 int rtgde_start(flowgraph_t *f)
@@ -206,17 +269,24 @@ void flowgraph_teardown(flowgraph_t *f)
 	flowgraph_model_t *pos_m, *n_m;
 
 	rtgde_stop(f);
+
+	pthread_mutex_lock(&f_priv->config_mutex);
+
 	free((char *)f->name);
 
 	/* free the prediction list */
 	list_for_each_entry_safe(pos_p, n_p, &f_priv->predictions, list) {
 		list_del(&(pos_p->list));
+		free(pos_p);
 	}
 
 	/* free the models list */
 	list_for_each_entry_safe(pos_m, n_m, &f_priv->models, list) {
 		list_del(&(pos_m->list));
+		free(pos_m);
 	}
 
 	free(f);
+
+	/* never free the mutex to spot the use-after-free in some cases */
 }

@@ -1,4 +1,5 @@
 #include "graph_priv.h"
+#include <inttypes.h>
 
 graph_point_priv_t *graph_point_priv(const sample_t *p)
 {
@@ -21,6 +22,27 @@ graph_t * graph_create()
 	g_priv->point_count = 0;
 
 	return (graph_t *)g_priv;
+}
+
+graph_t * graph_copy(const graph_t *g)
+{
+	graph_priv_t *g_priv = graph_priv(g);
+	graph_t *ng = graph_create();
+	int ret = 0;
+
+	if (!ng)
+		return NULL;
+
+	graph_point_priv_t *pos;
+	list_for_each_entry(pos, &g_priv->point_lst, list)
+		ret |= graph_add_point(ng, pos->base.time, pos->base.value);
+
+	if (ret) {
+		graph_delete(ng);
+		ng = NULL;
+	}
+
+	return ng;
 }
 
 int graph_add_point(graph_t *g, sample_time_t time, sample_value_t value)
@@ -118,6 +140,16 @@ graph_integral_t graph_integral(const graph_t *g, sample_time_t start,
 	/* keep the old value and kee on integrating */
 	g_int += (end - old_time) * old_value;
 	return g_int;
+}
+
+void graph_print_coordinates(const graph_t *g)
+{
+	graph_priv_t *g_priv = graph_priv(g);
+
+	graph_point_priv_t *pos;
+	list_for_each_entry(pos, &g_priv->point_lst, list)
+		printf("[%"PRIu64", %u\n", pos->base.time, pos->base.value);
+	printf("\n");
 }
 
 void graph_delete(graph_t *g)

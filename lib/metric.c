@@ -38,6 +38,11 @@ static history_size_t rb_next_index(history_size_t index, history_size_t history
 	return (index + 1) % history_size;
 }
 
+static history_size_t rb_previous_index(history_size_t index, history_size_t history_size)
+{
+	return (history_size + index - 1) % history_size;
+}
+
 void metric_print_history(metric_t *m)
 {
 	metric_priv_t *m_priv = metric_priv(m);
@@ -105,7 +110,7 @@ sample_t metric_get_last(metric_t *m)
 	sample_t s;
 
 	pthread_mutex_lock(&m_priv->history_mutex);
-	last = (m_priv->history_size + m_priv->put - 1) % m_priv->history_size;
+	last = rb_previous_index(m_priv->put, m_priv->history_size);
 
 	s.time = m_priv->ring[last].time;
 	s.value = m_priv->ring[last].value;

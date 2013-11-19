@@ -24,6 +24,11 @@ typedef struct {
 	struct list_head metrics;
 } prediction_output_t;
 
+prediction_output_t *prediction_output_create();
+int prediction_output_append(prediction_output_t *po, const prediction_metric_result_t *pmr);
+int prediction_output_append_list_copy(prediction_output_t *po, struct list_head list);
+void prediction_output_delete(prediction_output_t *po);
+
 typedef int (*prediction_check_t)(prediction_t *p);
 typedef prediction_output_t *(*prediction_exec_t)(prediction_t *p, prediction_output_t *po);
 typedef void (*prediction_delete_t)(prediction_t *p);
@@ -35,7 +40,6 @@ prediction_t * prediction_create(prediction_check_t check,
 
 int prediction_attach_metric(prediction_t *p, metric_t *m);
 prediction_output_t *prediction_exec(prediction_t *p);
-void prediction_output_delete(prediction_output_t *po);
 void prediction_delete(prediction_t *p);
 
 #endif // PREDICTION_H

@@ -24,7 +24,22 @@ static void prediction_metric_result_delete(prediction_metric_result_t *pmr)
 	graph_delete((graph_t *)pmr->low);
 }
 
-static prediction_output_t *prediction_output_create()
+prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr)
+{
+	prediction_metric_result_t *new_pmr = malloc(sizeof(prediction_metric_result_t));
+	if (!pmr)
+		return NULL;
+
+	INIT_LIST_HEAD(&new_pmr->list);
+	new_pmr->name = strdup(pmr->name);
+	new_pmr->high = graph_copy(pmr->high);
+	new_pmr->average = graph_copy(pmr->average);
+	new_pmr->low = graph_copy(pmr->low);
+
+	return new_pmr;
+}
+
+prediction_output_t *prediction_output_create()
 {
 	prediction_output_t *po = malloc(sizeof(prediction_output_t));
 	if (!po)
@@ -34,9 +49,24 @@ static prediction_output_t *prediction_output_create()
 	return po;
 }
 
+int prediction_output_append(prediction_output_t *po, const prediction_metric_result_t *pmr)
+{
+	/* TODO */
+	return 0;
+}
+
+int prediction_output_append_list_copy(prediction_output_t *po, struct list_head list)
+{
+	/* TODO */
+	return 0;
+}
+
 void prediction_output_delete(prediction_output_t *po)
 {
 	prediction_metric_result_t *pos, *n;
+
+	if (!po)
+		return;
 
 	/* free the metrics list */
 	list_for_each_entry_safe(pos, n, &po->metrics, list) {

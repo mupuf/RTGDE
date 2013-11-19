@@ -29,6 +29,16 @@ prediction_output_t *prediction_simple_exec(prediction_t *p, prediction_output_t
 		graph_add_point((graph_t *)r->high,
 				simple->prediction_length,
 				metric_get_last(pos->base).value);
+
+		graph_add_point((graph_t *)r->average,
+				simple->prediction_length,
+				metric_get_last(pos->base).value);
+
+		graph_add_point((graph_t *)r->low,
+				simple->prediction_length,
+				metric_get_last(pos->base).value);
+
+		prediction_output_append(po, r);
 	}
 
 	return po;
