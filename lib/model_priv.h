@@ -11,11 +11,20 @@ typedef struct {
 
 typedef struct {
 	model_output_t base;
-
 } model_output_priv_t;
 
 typedef struct {
 	model_t base;
+
+	model_exec_t exec;
+	model_delete_t dtor;
+
+	void *user;
 } model_priv_t;
+
+model_priv_t * model_priv(model_t *m);
+model_output_t * mode_output_create();
+
+model_t * model_create(model_exec_t exec, model_delete_t dtor, void *user);
 
 #endif // MODEL_PRIV_H

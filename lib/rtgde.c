@@ -14,7 +14,7 @@
 
 typedef struct {
 	prediction_t *base;
-	prediction_output_t *last_prediction;
+	prediction_list_t *last_prediction;
 
 	/* private declarations */
 	struct list_head list;
@@ -60,6 +60,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 {
 	flowgraph_prediction_t *pos_p;
 	flowgraph_model_t *pos_m;
+	model_output_t *mo;
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
@@ -70,15 +71,16 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 	/* feed the predictions to the models */
 	list_for_each_entry(pos_m, &f_priv->models, list) {
-		prediction_output_t *predictions = prediction_output_create();
+		prediction_list_t *predictions = prediction_list_create();
 
 		/* unite all the predictions in one list */
 		list_for_each_entry(pos_p, &f_priv->predictions, list) {
 			prediction_output_append_list_copy(predictions,
-							   pos_p->last_prediction->metrics);
+							   pos_p->last_prediction);
 		}
 
 		/* feed the ouput of prediction to each models */
+		mo = model_exec(pos_m->base, predictions);
 
 		/* predictions will be freed by model_output_delete() */
 	}
@@ -87,7 +89,8 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 	/* take a decision */
 
-	/* free all predictions */
+	/* free all the ressources */
+	model_output_delete(mo);
 	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		prediction_output_delete(pos_p->last_prediction);
 		pos_p->last_prediction = NULL;

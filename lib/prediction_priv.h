@@ -24,5 +24,6 @@ typedef struct {
 
 prediction_priv_t * prediction_priv(prediction_t* p);
 prediction_metric_result_t *prediction_metric_result_create(const char *name);
+void prediction_output_append(prediction_list_t *po, prediction_metric_result_t *pmr);
 
 #endif // PREDICTION_PRIV_H

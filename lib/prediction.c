@@ -16,7 +16,7 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name)
 	return pmr;
 }
 
-static void prediction_metric_result_delete(prediction_metric_result_t *pmr)
+void prediction_metric_result_delete(prediction_metric_result_t *pmr)
 {
 	free((char *)pmr->name);
 	graph_delete((graph_t *)pmr->high);
@@ -39,40 +39,47 @@ prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_resu
 	return new_pmr;
 }
 
-prediction_output_t *prediction_output_create()
+prediction_list_t *prediction_list_create()
 {
-	prediction_output_t *po = malloc(sizeof(prediction_output_t));
-	if (!po)
+	prediction_list_t *pl = malloc(sizeof(prediction_list_t));
+	if (!pl)
 		return NULL;
 
-	INIT_LIST_HEAD(&po->metrics);
-	return po;
+	INIT_LIST_HEAD(pl);
+	return pl;
 }
 
-int prediction_output_append(prediction_output_t *po, const prediction_metric_result_t *pmr)
+void prediction_output_append(prediction_list_t *pl, prediction_metric_result_t *pmr)
 {
-	/* TODO */
+	list_add(pl, &pmr->list);
+}
+
+int prediction_output_append_list_copy(prediction_list_t *po, const prediction_list_t * npl)
+{
+	prediction_metric_result_t *pmr;
+
+	list_for_each_entry(pmr, npl, list) {
+		prediction_metric_result_t *npmr = prediction_metric_result_copy(pmr);
+		if (!npmr)
+			return 1;
+		prediction_output_append(po, npmr);
+	}
 	return 0;
 }
 
-int prediction_output_append_list_copy(prediction_output_t *po, struct list_head list)
-{
-	/* TODO */
-	return 0;
-}
-
-void prediction_output_delete(prediction_output_t *po)
+void prediction_output_delete(prediction_list_t *pl)
 {
 	prediction_metric_result_t *pos, *n;
 
-	if (!po)
+	if (!pl)
 		return;
 
 	/* free the metrics list */
-	list_for_each_entry_safe(pos, n, &po->metrics, list) {
+	list_for_each_entry_safe(pos, n, pl, list) {
 		list_del(&(pos->list));
 		prediction_metric_result_delete(pos);
 	}
+	free(pl);
 }
 
 prediction_priv_t * prediction_priv(prediction_t* p)
@@ -98,7 +105,7 @@ prediction_t * prediction_create(prediction_check_t check,
 	return (prediction_t *)p_priv;
 }
 
-prediction_output_t *prediction_exec(prediction_t *p)
+prediction_list_t *prediction_exec(prediction_t *p)
 {
 	prediction_priv_t *p_priv = prediction_priv(p);
 
@@ -106,11 +113,11 @@ prediction_output_t *prediction_exec(prediction_t *p)
 	if (ret)
 		return NULL;
 
-	prediction_output_t *po = prediction_output_create();
-	if (!po)
+	prediction_list_t *pl = prediction_list_create();
+	if (!pl)
 		return NULL;
 
-	return p_priv->exec(p, po);
+	return p_priv->exec(p, pl);
 }
 
 void prediction_delete(prediction_t *p)
@@ -126,6 +133,7 @@ void prediction_delete(prediction_t *p)
 		free(pos);
 	}
 
+	free(p);
 }
 
 int prediction_attach_metric(prediction_t *p, metric_t *m)

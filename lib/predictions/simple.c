@@ -15,7 +15,7 @@ int prediction_simple_check(prediction_t *p)
 	return 0;
 }
 
-prediction_output_t *prediction_simple_exec(prediction_t *p, prediction_output_t *po)
+prediction_list_t *prediction_simple_exec(prediction_t *p, prediction_list_t *po)
 {
 	prediction_simple_t *simple = prediction_simple(p);
 	prediction_priv_t *p_priv = prediction_priv(p);
