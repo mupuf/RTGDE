@@ -23,9 +23,11 @@ typedef struct {
 typedef struct list_head prediction_list_t;
 
 prediction_list_t * prediction_list_create();
-int prediction_output_append_list_copy(prediction_list_t *po, const prediction_list_t *npl);
+int prediction_list_append_list_copy(prediction_list_t *po, const prediction_list_t *npl);
+prediction_metric_result_t * prediction_list_find(prediction_list_t *input, const char *metric_name);
+prediction_metric_result_t * prediction_list_extract(prediction_list_t *input, const char *metric_name);
 void prediction_metric_result_delete(prediction_metric_result_t *pmr);
-void prediction_output_delete(prediction_list_t *po);
+void prediction_list_delete(prediction_list_t *po);
 
 typedef int (*prediction_check_t)(prediction_t *p);
 typedef prediction_list_t *(*prediction_exec_t)(prediction_t *p, prediction_list_t *po);

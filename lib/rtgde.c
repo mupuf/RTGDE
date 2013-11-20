@@ -75,7 +75,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 		/* unite all the predictions in one list */
 		list_for_each_entry(pos_p, &f_priv->predictions, list) {
-			prediction_output_append_list_copy(predictions,
+			prediction_list_append_list_copy(predictions,
 							   pos_p->last_prediction);
 		}
 
@@ -92,7 +92,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	/* free all the ressources */
 	model_output_delete(mo);
 	list_for_each_entry(pos_p, &f_priv->predictions, list) {
-		prediction_output_delete(pos_p->last_prediction);
+		prediction_list_delete(pos_p->last_prediction);
 		pos_p->last_prediction = NULL;
 	}
 

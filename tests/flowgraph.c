@@ -11,20 +11,23 @@ int main(int argc, char **argv)
 {
 	int i;
 
+	prediction_t * mp = prediction_simple_create(1000000);
+	assert(mp);
+
 	metric_t * me1 = metric_create("throughput", 10);
 	assert(me1);
-	prediction_t * mp1 = prediction_simple_create(1000000);
-	assert(mp1);
+	metric_t * me2 = metric_create("latency", 10);
+	assert(me2);
 
-	metric_t * me2 = metric_create("throughput", 10);
-	assert(me2);
-	prediction_t * mp2 = prediction_simple_create(1000000);
-	assert(me2);
+	metric_t * me3 = metric_create("lol", 10);
+
+	assert(!prediction_attach_metric(mp, me1));
+	assert(!prediction_attach_metric(mp, me2));
+	assert(!prediction_attach_metric(mp, me3));
 
 	flowgraph_t *f = flowgraph_create("nif selector", 1000000);
 
-	assert(!flowgraph_attach_prediction(f, mp1));
-	assert(!flowgraph_attach_prediction(f, mp2));
+	assert(!flowgraph_attach_prediction(f, mp));
 
 	model_t * m = model_dummy_create();
 	assert(m);
@@ -44,8 +47,7 @@ int main(int argc, char **argv)
 
 	model_delete(m);
 
-	prediction_delete(mp2);
-	prediction_delete(mp1);
+	prediction_delete(mp);
 
 	metric_delete(me2);
 	metric_delete(me1);

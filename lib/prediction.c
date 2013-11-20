@@ -49,12 +49,12 @@ prediction_list_t *prediction_list_create()
 	return pl;
 }
 
-void prediction_output_append(prediction_list_t *pl, prediction_metric_result_t *pmr)
+void prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr)
 {
-	list_add(pl, &pmr->list);
+	list_add_tail(&pmr->list, pl);
 }
 
-int prediction_output_append_list_copy(prediction_list_t *po, const prediction_list_t * npl)
+int prediction_list_append_list_copy(prediction_list_t *po, const prediction_list_t * npl)
 {
 	prediction_metric_result_t *pmr;
 
@@ -62,12 +62,33 @@ int prediction_output_append_list_copy(prediction_list_t *po, const prediction_l
 		prediction_metric_result_t *npmr = prediction_metric_result_copy(pmr);
 		if (!npmr)
 			return 1;
-		prediction_output_append(po, npmr);
+		prediction_list_append(po, npmr);
 	}
 	return 0;
 }
 
-void prediction_output_delete(prediction_list_t *pl)
+prediction_metric_result_t * prediction_list_find(prediction_list_t *pl, const char *metric_name)
+{
+	prediction_metric_result_t *pos, *n;
+
+	/* free the metrics list */
+	list_for_each_entry_safe(pos, n, pl, list) {
+		if (strcmp(pos->name, metric_name) == 0)
+			return pos;
+	}
+
+	return NULL;
+}
+
+prediction_metric_result_t * prediction_list_extract(prediction_list_t *pl, const char *metric_name)
+{
+	prediction_metric_result_t *ret = prediction_list_find(pl, metric_name);
+	if (ret)
+		list_del(&(ret->list));
+	return ret;
+}
+
+void prediction_list_delete(prediction_list_t *pl)
 {
 	prediction_metric_result_t *pos, *n;
 
@@ -142,6 +163,7 @@ int prediction_attach_metric(prediction_t *p, metric_t *m)
 	if (!pm)
 		return -1;
 
+	INIT_LIST_HEAD(&pm->list);
 	pm->base = m;
 
 	prediction_priv_t *p_priv = prediction_priv(p);

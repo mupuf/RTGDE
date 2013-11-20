@@ -48,7 +48,7 @@ model_t * model_create(model_exec_t exec, model_delete_t dtor, void *user)
 model_output_t *model_exec(model_t *m, prediction_list_t * predictions)
 {
 	model_output_t *mo = model_priv(m)->exec(m, predictions);
-	prediction_output_delete(predictions);
+	prediction_list_delete(predictions);
 	return mo;
 }
 

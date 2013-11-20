@@ -15,7 +15,7 @@ int prediction_simple_check(prediction_t *p)
 	return 0;
 }
 
-prediction_list_t *prediction_simple_exec(prediction_t *p, prediction_list_t *po)
+prediction_list_t *prediction_simple_exec(prediction_t *p, prediction_list_t *pl)
 {
 	prediction_simple_t *simple = prediction_simple(p);
 	prediction_priv_t *p_priv = prediction_priv(p);
@@ -38,10 +38,10 @@ prediction_list_t *prediction_simple_exec(prediction_t *p, prediction_list_t *po
 				simple->prediction_length,
 				metric_get_last(pos->base).value);
 
-		prediction_output_append(po, r);
+		prediction_list_append(pl, r);
 	}
 
-	return po;
+	return pl;
 }
 
 void prediction_simple_dtor(prediction_t *p)
