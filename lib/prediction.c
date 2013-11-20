@@ -159,14 +159,26 @@ void prediction_delete(prediction_t *p)
 
 int prediction_attach_metric(prediction_t *p, metric_t *m)
 {
-	prediction_metric_t *pm = malloc(sizeof(prediction_metric_t));
+	prediction_priv_t *p_priv = prediction_priv(p);
+	prediction_metric_t *pos;
+	prediction_metric_t *pm;
+
+	list_for_each_entry(pos, &p_priv->metrics, list) {
+		if (strcmp(metric_name(pos->base), metric_name(m)) == 0) {
+			fprintf(stderr,
+				"prediction_attach_metric: Metric '%s' is already attached\n",
+				metric_name(m));
+			return 1;
+		}
+	}
+
+	pm = malloc(sizeof(prediction_metric_t));
 	if (!pm)
 		return -1;
 
 	INIT_LIST_HEAD(&pm->list);
 	pm->base = m;
 
-	prediction_priv_t *p_priv = prediction_priv(p);
 	list_add_tail(&pm->list, &p_priv->metrics);
 
 	return 0;
