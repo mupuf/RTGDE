@@ -29,15 +29,6 @@ prediction_metric_result_t * prediction_list_extract(prediction_list_t *input, c
 void prediction_metric_result_delete(prediction_metric_result_t *pmr);
 void prediction_list_delete(prediction_list_t *po);
 
-typedef int (*prediction_check_t)(prediction_t *p);
-typedef prediction_list_t *(*prediction_exec_t)(prediction_t *p, prediction_list_t *po);
-typedef void (*prediction_delete_t)(prediction_t *p);
-
-prediction_t * prediction_create(prediction_check_t check,
-				 prediction_exec_t exec,
-				 prediction_delete_t dtor,
-				 void *user);
-
 int prediction_attach_metric(prediction_t *p, metric_t *m);
 prediction_list_t *prediction_exec(prediction_t *p);
 void prediction_delete(prediction_t *p);

@@ -22,6 +22,15 @@ typedef struct {
 	prediction_delete_t dtor;
 } prediction_priv_t;
 
+typedef int (*prediction_check_t)(prediction_t *p);
+typedef prediction_list_t *(*prediction_exec_t)(prediction_t *p, prediction_list_t *po);
+typedef void (*prediction_delete_t)(prediction_t *p);
+
+prediction_t * prediction_create(prediction_check_t check,
+				 prediction_exec_t exec,
+				 prediction_delete_t dtor,
+				 void *user);
+
 prediction_priv_t * prediction_priv(prediction_t* p);
 prediction_metric_result_t *prediction_metric_result_create(const char *name);
 void prediction_list_append(prediction_list_t *po, prediction_metric_result_t *pmr);
