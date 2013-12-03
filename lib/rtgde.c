@@ -69,7 +69,6 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	/* do the predictions for all attached predictions */
 	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		pos_p->last_prediction = prediction_exec(pos_p->base);
-		printf("alloc prediction: %p\n", pos_p->last_prediction);
 	}
 
 	/* feed the predictions to the models */
@@ -78,7 +77,6 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 		/* unite all the predictions in one list */
 		list_for_each_entry(pos_p, &f_priv->predictions, list) {
-			printf("copy prediction: %p\n", pos_p->last_prediction);
 			prediction_list_append_list_copy(predictions,
 							   pos_p->last_prediction);
 		}
@@ -99,7 +97,6 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	decision_input_delete(di);
 	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		prediction_list_delete(pos_p->last_prediction);
-		printf("free prediction: %p\n", pos_p->last_prediction);
 		pos_p->last_prediction = NULL;
 	}
 
