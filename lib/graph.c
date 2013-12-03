@@ -157,6 +157,9 @@ void graph_delete(graph_t *g)
 	graph_priv_t *g_priv = graph_priv(g);
 	graph_point_priv_t *pos, *n;
 
+	if (!g)
+		return;
+
 	list_for_each_entry_safe(pos, n, &g_priv->point_lst, list) {
 		list_del(&(pos->list));
 		free(pos);

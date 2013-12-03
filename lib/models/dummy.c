@@ -11,26 +11,35 @@ model_dummy_t * model_dummy(model_t* m)
 	return (model_dummy_t*) model_priv(m)->user;
 }
 
-model_output_t * model_dummy_exec(model_t *m, prediction_list_t *input)
+decision_input_model_t * model_dummy_exec(model_t *m, prediction_list_t *input)
 {
-	model_dummy_t *dummy = model_dummy(m);
-	prediction_metric_result_t *m_throughput, *m_latency;
-	model_output_t *mo;
+	prediction_metric_result_t *metric;
+	decision_input_metric_t *di_metric;
+	decision_input_model_t *dim;
 
-	fprintf(stderr, "Heya!\n");
-	m_throughput = prediction_list_extract(input, "throughput");
-	m_latency = prediction_list_extract(input, "latency");
-
-	assert(m_throughput);
-	assert(m_latency);
-
-	mo = mode_output_create();
-	if (!mo)
+	dim = decision_input_model_create();
+	if (!dim)
 		 return NULL;
 
-	/* Real work goes here ! */
+	do {
+		metric = prediction_list_extract_head(input);
+		if (!metric)
+			continue;
 
-	return mo;
+		/* Real work goes here ! */
+		graph_t * output = graph_create();
+
+		const sample_t *s = graph_read_first(metric->high);
+		while (s) {
+			graph_add_point(output, s->time, s->value * 1.2);
+			s = graph_read_next(metric->high, s);
+		}
+
+		di_metric = decision_input_metric_create(metric, output, 0);
+		decision_input_model_add_metric(dim, di_metric);
+	} while (metric);
+
+	return dim;
 }
 
 void model_dummy_delete(model_t *m)

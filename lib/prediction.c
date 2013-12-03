@@ -18,10 +18,23 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name)
 
 void prediction_metric_result_delete(prediction_metric_result_t *pmr)
 {
+	if (!pmr)
+		return;
+
+	if (pmr->name == (char *)42) {
+		fprintf(stderr,
+			"possible double free of prediction_metric_result_t %p\n",
+			pmr);
+	}
+
 	free((char *)pmr->name);
 	graph_delete((graph_t *)pmr->high);
 	graph_delete((graph_t *)pmr->average);
 	graph_delete((graph_t *)pmr->low);
+
+	pmr->name = (char *)42; // POISON!
+
+	free(pmr);
 }
 
 prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr)
@@ -71,7 +84,6 @@ prediction_metric_result_t * prediction_list_find(prediction_list_t *pl, const c
 {
 	prediction_metric_result_t *pos, *n;
 
-	/* free the metrics list */
 	list_for_each_entry_safe(pos, n, pl, list) {
 		if (strcmp(pos->name, metric_name) == 0)
 			return pos;
@@ -80,12 +92,22 @@ prediction_metric_result_t * prediction_list_find(prediction_list_t *pl, const c
 	return NULL;
 }
 
-prediction_metric_result_t * prediction_list_extract(prediction_list_t *pl, const char *metric_name)
+prediction_metric_result_t * prediction_list_extract_by_name(prediction_list_t *pl, const char *metric_name)
 {
 	prediction_metric_result_t *ret = prediction_list_find(pl, metric_name);
 	if (ret)
 		list_del(&(ret->list));
 	return ret;
+}
+
+prediction_metric_result_t * prediction_list_extract_head(prediction_list_t *input)
+{
+	prediction_metric_result_t *ret = list_entry(input->next, prediction_metric_result_t, list);
+	if (!list_empty(input)) {
+		list_del(&(ret->list));
+		return ret;
+	} else
+		return NULL;
 }
 
 void prediction_list_delete(prediction_list_t *pl)

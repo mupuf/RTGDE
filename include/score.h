@@ -9,5 +9,6 @@ typedef struct {
 	const char *name;
 } score_t;
 
+score_metric_t * score_metric_create(score_t *s, int weight);
 
 #endif // SCORE_H

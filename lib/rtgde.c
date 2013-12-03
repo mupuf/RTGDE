@@ -60,13 +60,16 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 {
 	flowgraph_prediction_t *pos_p;
 	flowgraph_model_t *pos_m;
-	model_output_t *mo;
+	decision_input_model_t *dim;
+	decision_input_t *di = decision_input_create();
+	printf("execute_flow_graph:\n");
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
 	/* do the predictions for all attached predictions */
 	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		pos_p->last_prediction = prediction_exec(pos_p->base);
+		printf("alloc prediction: %p\n", pos_p->last_prediction);
 	}
 
 	/* feed the predictions to the models */
@@ -75,12 +78,15 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 		/* unite all the predictions in one list */
 		list_for_each_entry(pos_p, &f_priv->predictions, list) {
+			printf("copy prediction: %p\n", pos_p->last_prediction);
 			prediction_list_append_list_copy(predictions,
 							   pos_p->last_prediction);
 		}
 
 		/* feed the ouput of prediction to each models */
-		mo = model_exec(pos_m->base, predictions);
+		dim = model_exec(pos_m->base, predictions);
+
+		decision_input_add_model(di, dim);
 
 		/* predictions will be freed by model_output_delete() */
 	}
@@ -90,9 +96,10 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	/* take a decision */
 
 	/* free all the ressources */
-	model_output_delete(mo);
+	decision_input_delete(di);
 	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		prediction_list_delete(pos_p->last_prediction);
+		printf("free prediction: %p\n", pos_p->last_prediction);
 		pos_p->last_prediction = NULL;
 	}
 
@@ -280,6 +287,7 @@ void flowgraph_teardown(flowgraph_t *f)
 	/* free the prediction list */
 	list_for_each_entry_safe(pos_p, n_p, &f_priv->predictions, list) {
 		list_del(&(pos_p->list));
+		prediction_list_delete(pos_p->last_prediction);
 		free(pos_p);
 	}
 

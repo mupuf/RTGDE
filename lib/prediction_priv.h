@@ -12,6 +12,10 @@ typedef struct {
 	struct list_head list;
 } prediction_metric_t;
 
+typedef int (*prediction_check_t)(prediction_t *p);
+typedef prediction_list_t *(*prediction_exec_t)(prediction_t *p, prediction_list_t *po);
+typedef void (*prediction_delete_t)(prediction_t *p);
+
 typedef struct {
 	prediction_t base;
 
@@ -21,10 +25,6 @@ typedef struct {
 	prediction_exec_t exec;
 	prediction_delete_t dtor;
 } prediction_priv_t;
-
-typedef int (*prediction_check_t)(prediction_t *p);
-typedef prediction_list_t *(*prediction_exec_t)(prediction_t *p, prediction_list_t *po);
-typedef void (*prediction_delete_t)(prediction_t *p);
 
 prediction_t * prediction_create(prediction_check_t check,
 				 prediction_exec_t exec,
