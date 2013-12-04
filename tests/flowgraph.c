@@ -7,6 +7,14 @@
 #include <predictions/simple.h>
 #include <models/dummy.h>
 
+int64_t relative_time_us()
+{
+	static int64_t boot_time = 0;
+	if (boot_time == 0)
+		boot_time = clock_read_us();
+	return clock_read_us() - boot_time;
+}
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -40,9 +48,9 @@ int main(int argc, char **argv)
 	rtgde_start(f);
 
 	for (i = 0; i < 10; i++) {
-		metric_update(me1, clock_read_us(), i);
-		metric_update(me2, clock_read_us(), i+1000);
-		metric_update(me3, clock_read_us(), i+2000);
+		metric_update(me1, relative_time_us(), i);
+		metric_update(me2, relative_time_us(), i+1000);
+		metric_update(me3, relative_time_us(), i+2000);
 		usleep(500000);
 	}
 
