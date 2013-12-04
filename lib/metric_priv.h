@@ -16,6 +16,9 @@ typedef struct {
 	sample_t *ring;
 	history_size_t put;
 	history_size_t get;
+
+	/* CSV output */
+	FILE *csv_output;
 } metric_priv_t;
 
 metric_priv_t * metric_priv(metric_t* m);

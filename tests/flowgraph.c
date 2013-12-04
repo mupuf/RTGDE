@@ -22,6 +22,8 @@ int main(int argc, char **argv)
 	metric_t * me3 = metric_create("lol", 10);
 	assert(me3);
 
+	metric_set_csv_output_file(me1, "us", "prout", stderr);
+
 	assert(!prediction_attach_metric(mp, me1));
 	assert(!prediction_attach_metric(mp, me2));
 	assert(!prediction_attach_metric(mp, me3));
@@ -40,8 +42,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < 10; i++) {
 		metric_update(me1, clock_read_us(), i);
 		metric_update(me2, clock_read_us(), i+1000);
-		metric_update(me2, clock_read_us(), i+2000);
-		//metric_print_history(m);
+		metric_update(me3, clock_read_us(), i+2000);
 		usleep(500000);
 	}
 

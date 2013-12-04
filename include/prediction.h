@@ -18,6 +18,9 @@ typedef struct {
 	const graph_t *high;
 	const graph_t *average;
 	const graph_t *low;
+
+	/* CSV output */
+	FILE *csv_output;
 } prediction_metric_result_t;
 
 typedef struct list_head prediction_list_t;

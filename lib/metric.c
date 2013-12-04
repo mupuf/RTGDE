@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 metric_priv_t * metric_priv(metric_t* m)
 {
@@ -23,6 +24,7 @@ metric_t * metric_create(const char *name, history_size_t history_size)
 	m_priv->ring = malloc(history_size * sizeof(sample_t));
 	m_priv->put = 0;
 	m_priv->get = 0;
+	m_priv->csv_output = NULL;
 
 	return (metric_t *)m_priv;
 }
@@ -77,6 +79,10 @@ void metric_update(metric_t *m, sample_time_t timestamp, sample_value_t value)
 
 	m_priv->put = rb_next_index(m_priv->put, m_priv->history_size);
 
+	/* CSV output */
+	if (m_priv->csv_output)
+		fprintf(m_priv->csv_output, "%" PRIu64 ", %u\n", timestamp, value);
+
 	pthread_mutex_unlock(&m_priv->history_mutex);
 }
 
@@ -123,6 +129,13 @@ history_size_t metric_history_size(metric_t *m)
 {
 	metric_priv_t *m_priv = metric_priv(m);
 	return m_priv->history_size;
+}
+
+void metric_set_csv_output_file(metric_t *m, const char *time_unit, const char *value_unit, FILE *of)
+{
+	metric_priv_t *m_priv = metric_priv(m);
+	m_priv->csv_output = of;
+	fprintf(of, "Time (%s), %s (%s)\n", time_unit, m_priv->name, value_unit);
 }
 
 void metric_delete(metric_t *m)

@@ -62,7 +62,6 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	flowgraph_model_t *pos_m;
 	decision_input_model_t *dim;
 	decision_input_t *di = decision_input_create();
-	printf("execute_flow_graph:\n");
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
