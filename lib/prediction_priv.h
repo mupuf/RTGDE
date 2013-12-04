@@ -13,7 +13,7 @@ typedef struct {
 } prediction_metric_t;
 
 typedef int (*prediction_check_t)(prediction_t *p);
-typedef prediction_list_t *(*prediction_exec_t)(prediction_t *p, prediction_list_t *po);
+typedef prediction_list_t *(*prediction_exec_t)(prediction_t *p);
 typedef void (*prediction_delete_t)(prediction_t *p);
 
 typedef struct {
@@ -24,6 +24,10 @@ typedef struct {
 	prediction_check_t check;
 	prediction_exec_t exec;
 	prediction_delete_t dtor;
+
+	/* CSV output */
+	char * csv_filename_format;
+	uint64_t prediction_count;
 } prediction_priv_t;
 
 prediction_t * prediction_create(prediction_check_t check,

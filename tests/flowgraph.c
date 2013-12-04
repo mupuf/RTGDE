@@ -22,8 +22,6 @@ int main(int argc, char **argv)
 	metric_t * me3 = metric_create("lol", 10);
 	assert(me3);
 
-	metric_set_csv_output_file(me1, "us", "prout", stderr);
-
 	assert(!prediction_attach_metric(mp, me1));
 	assert(!prediction_attach_metric(mp, me2));
 	assert(!prediction_attach_metric(mp, me3));
@@ -36,6 +34,8 @@ int main(int argc, char **argv)
 	assert(m);
 
 	assert(!flowgraph_attach_model(f, m));
+
+	prediction_output_csv(mp, "pred_simple_%s_%i.csv");
 
 	rtgde_start(f);
 

@@ -144,6 +144,8 @@ prediction_t * prediction_create(prediction_check_t check,
 	p_priv->exec = exec;
 	p_priv->dtor = dtor;
 	p_priv->base.user = user;
+	p_priv->csv_filename_format = NULL;
+	p_priv->prediction_count = 0;
 
 	return (prediction_t *)p_priv;
 }
@@ -151,16 +153,39 @@ prediction_t * prediction_create(prediction_check_t check,
 prediction_list_t *prediction_exec(prediction_t *p)
 {
 	prediction_priv_t *p_priv = prediction_priv(p);
+	prediction_metric_t *pos;
 
 	int ret = p_priv->check(p);
 	if (ret)
 		return NULL;
 
-	prediction_list_t *pl = prediction_list_create();
+	p_priv->prediction_count++;
+
+	prediction_list_t *pl = p_priv->exec(p);
 	if (!pl)
 		return NULL;
 
-	return p_priv->exec(p, pl);
+	if (!p_priv->csv_filename_format)
+		return pl;
+
+	/* list all metrics */
+	list_for_each_entry(pos, &p_priv->metrics, list) {
+		prediction_metric_result_t *pred;
+		char filename[PATH_MAX];
+
+		snprintf(filename, sizeof(filename), p_priv->csv_filename_format,
+			 metric_name(pos->base), p_priv->prediction_count);
+
+		printf("filename = '%s'\n", filename);
+		FILE *f = fopen(filename, "w");
+		if (!f) {
+			perror("prediction csv output, fopen");
+			continue;
+		}
+		pred = prediction_list_find(pl, metric_name(pos->base));
+	}
+
+	return pl;
 }
 
 void prediction_delete(prediction_t *p)
@@ -176,7 +201,23 @@ void prediction_delete(prediction_t *p)
 		free(pos);
 	}
 
+	if (p_priv->csv_filename_format)
+		free(p_priv->csv_filename_format);
+
+	/* POISON: detect use after free or double-delete */
+	p_priv->csv_filename_format = (char *)42;
+
 	free(p);
+}
+
+void prediction_output_csv(prediction_t *p, const char *csv_filename_format)
+{
+	prediction_priv_t *p_priv = prediction_priv(p);
+
+	if (p_priv->csv_filename_format)
+		free(p_priv->csv_filename_format);
+
+	p_priv->csv_filename_format = strdup(csv_filename_format);
 }
 
 int prediction_attach_metric(prediction_t *p, metric_t *m)

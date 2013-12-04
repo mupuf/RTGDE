@@ -15,11 +15,15 @@ int prediction_simple_check(prediction_t *p)
 	return 0;
 }
 
-prediction_list_t *prediction_simple_exec(prediction_t *p, prediction_list_t *pl)
+prediction_list_t *prediction_simple_exec(prediction_t *p)
 {
 	prediction_simple_t *simple = prediction_simple(p);
 	prediction_priv_t *p_priv = prediction_priv(p);
 	prediction_metric_t *pos;
+
+	prediction_list_t *pl = prediction_list_create();
+	if (!pl)
+		return NULL;
 
 	/* all input metrics */
 	list_for_each_entry(pos, &p_priv->metrics, list) {
@@ -27,13 +31,22 @@ prediction_list_t *prediction_simple_exec(prediction_t *p, prediction_list_t *pl
 		r = prediction_metric_result_create(metric_name(pos->base));
 
 		graph_add_point((graph_t *)r->high,
+				0,
+				metric_get_last(pos->base).value);
+		graph_add_point((graph_t *)r->high,
 				simple->prediction_length,
 				metric_get_last(pos->base).value);
 
 		graph_add_point((graph_t *)r->average,
+				0,
+				metric_get_last(pos->base).value);
+		graph_add_point((graph_t *)r->average,
 				simple->prediction_length,
 				metric_get_last(pos->base).value);
 
+		graph_add_point((graph_t *)r->low,
+				0,
+				metric_get_last(pos->base).value);
 		graph_add_point((graph_t *)r->low,
 				simple->prediction_length,
 				metric_get_last(pos->base).value);

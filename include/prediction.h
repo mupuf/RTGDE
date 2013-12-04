@@ -18,9 +18,6 @@ typedef struct {
 	const graph_t *high;
 	const graph_t *average;
 	const graph_t *low;
-
-	/* CSV output */
-	FILE *csv_output;
 } prediction_metric_result_t;
 
 typedef struct list_head prediction_list_t;
@@ -32,7 +29,7 @@ prediction_metric_result_t * prediction_list_extract_by_name(prediction_list_t *
 prediction_metric_result_t * prediction_list_extract_head(prediction_list_t *input);
 void prediction_metric_result_delete(prediction_metric_result_t *pmr);
 void prediction_list_delete(prediction_list_t *po);
-
+void prediction_output_csv(prediction_t *p, const char *csv_filename_format);
 int prediction_attach_metric(prediction_t *p, metric_t *m);
 prediction_list_t *prediction_exec(prediction_t *p);
 void prediction_delete(prediction_t *p);
