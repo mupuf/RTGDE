@@ -17,7 +17,8 @@ typedef struct {
 	struct list_head states;
 	fsm_state_t *cur;
 
-	next_state_t next_state;
+	fsm_next_state_t next_state;
+	fsm_dtor_t dtor;
 	void *user;
 } fsm_priv_t;
 
