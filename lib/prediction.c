@@ -156,6 +156,8 @@ prediction_list_t *prediction_exec(prediction_t *p)
 	prediction_priv_t *p_priv = prediction_priv(p);
 	prediction_metric_t *pos;
 
+	fprintf(stderr, "prediction_exec\n");
+
 	int ret = p_priv->check(p);
 	if (ret)
 		return NULL;
