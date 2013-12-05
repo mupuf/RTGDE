@@ -1,12 +1,15 @@
 #ifndef FSM_H
 #define FSM_H
 
-struct fsm {
-	struct fsm_state *cur;
-};
+typedef struct {
+} fsm_t;
 
-struct fsm_state {
-	struct fsm_state (*func)(const struct fsm *fsm);
-};
+typedef struct {
+} fsm_state_t;
+
+typedef struct fsm_state *(*next_state_t)(const fsm_t *fsm, void *user);
+
+fsm_t *fsm_create(next_state_t next_state, void *user);
+fsm_state_t *fsm_add_state(fsm_t *fsm, void *user);
 
 #endif // FSM_H

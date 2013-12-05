@@ -37,6 +37,6 @@ prediction_t * prediction_create(prediction_check_t check,
 
 prediction_priv_t * prediction_priv(prediction_t* p);
 prediction_metric_result_t *prediction_metric_result_create(const char *name);
-void prediction_list_append(prediction_list_t *po, prediction_metric_result_t *pmr);
+void prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr);
 
 #endif // PREDICTION_PRIV_H

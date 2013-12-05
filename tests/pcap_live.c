@@ -6,7 +6,7 @@
 #include <predictions/simple.h>
 #include <models/dummy.h>
 
-#define NETIF_DATARATE 12500000 // 100 MBit/s
+#define NETIF_DATARATE 6000000 // 48 MBit/s
 
 int64_t relative_time_us()
 {
@@ -48,8 +48,12 @@ int capture_packets(metric_t * me, int64_t timeout_us)
 	metric_update(me, 0, 0);
 	while (relative_time_us() < timeout_us) {
 		pcap_next(handle, &header);
-		metric_update(me, relative_time_us(), NETIF_DATARATE);
-		metric_update(me, relative_time_us() + header.len * 1000000 / NETIF_DATARATE, 0);
+		int64_t time = relative_time_us();
+
+		metric_update(me, time - 1, 0);
+		metric_update(me, time, NETIF_DATARATE);
+		metric_update(me, time + header.len * 1000000 / NETIF_DATARATE, NETIF_DATARATE);
+		metric_update(me, time + (header.len * 1000000 / NETIF_DATARATE) + 1, 0);
 	}
 
 	/* And close the session */
@@ -59,7 +63,7 @@ int capture_packets(metric_t * me, int64_t timeout_us)
 
 int main(int argc, char *argv[])
 {
-	prediction_t * mp = prediction_simple_create(1000000);
+	prediction_t * mp = prediction_simple_create(1000);
 	assert(mp);
 
 	metric_t * me = metric_create("throughput", 1000);
