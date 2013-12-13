@@ -5,6 +5,10 @@
 #include "graph.h"
 #include "list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	void *user;
 } prediction_t;
@@ -33,5 +37,9 @@ void prediction_output_csv(prediction_t *p, const char *csv_filename_format);
 int prediction_attach_metric(prediction_t *p, metric_t *m);
 prediction_list_t *prediction_exec(prediction_t *p);
 void prediction_delete(prediction_t *p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // PREDICTION_H

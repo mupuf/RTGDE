@@ -5,6 +5,10 @@
 #include "graph.h"
 #include "history.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 } metric_t;
 
@@ -17,5 +21,9 @@ history_size_t metric_history_size(metric_t *m);
 void metric_print_history(metric_t *m);
 void metric_set_csv_output_file(metric_t *m, const char *time_unit, const char *unit, FILE *of);
 void metric_delete(metric_t *m);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // METRIC_H

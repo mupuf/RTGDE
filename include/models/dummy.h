@@ -3,6 +3,14 @@
 
 #include "../model.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 model_t * model_dummy_create();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

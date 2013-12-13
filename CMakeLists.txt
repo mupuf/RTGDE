@@ -25,8 +25,8 @@ if(USEPCAP)
 	endif(PCAP_FOUND)
 endif(USEPCAP)
 
-file(GLOB rtgde_SOURCES "lib/*.c" "lib/predictions/*.c" "lib/models/*.c"
-			"lib/*.h" "include/*.h" "include/predictions/*.h" "include/models/*.h")
+file(GLOB_RECURSE rtgde_SOURCES "lib/*.c" "lib/*.h"
+				"include/*.h")
 
 add_library(rtgde SHARED ${rtgde_SOURCES})
 set_property(TARGET rtgde PROPERTY VERSION 0.1.0)

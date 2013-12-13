@@ -2,6 +2,10 @@
 #include <inttypes.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 prediction_metric_result_t *prediction_metric_result_create(const char *name)
 {
 	prediction_metric_result_t *pmr = malloc(sizeof(prediction_metric_result_t));
@@ -292,3 +296,7 @@ int prediction_attach_metric(prediction_t *p, metric_t *m)
 
 	return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif

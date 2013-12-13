@@ -33,10 +33,10 @@ fsm_state_t *fsm_add_state(fsm_t *fsm, void *user)
 	return (fsm_state_t *)fs_priv;
 }
 
-fsm_state_t *fsm_update_state(fsm_t *fsm)
+fsm_state_t *fsm_update_state(fsm_t *fsm, const char *metric, void *value)
 {
 	fsm_priv_t *f_priv = fsm_priv(fsm);
-	f_priv->cur = f_priv->next_state(fsm, f_priv->user);
+	f_priv->cur = f_priv->next_state(fsm, metric, value);
 	return f_priv->cur;
 }
 

@@ -5,6 +5,10 @@
 
 #include "sample.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 
 } history_t;
@@ -17,5 +21,9 @@ void history_free(history_t *h);
 
 void history_push(sample_t *s);
 void history_get_sample_at(history_index_t i);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HISTORY_H
