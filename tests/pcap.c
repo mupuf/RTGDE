@@ -2,8 +2,10 @@
 #include <assert.h>
 #include <rtgde.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 
-#include <predictions/simple.h>
+#include <predictions/pred_fsm.h>
 #include <models/dummy.h>
 
 #define NETIF_DATARATE 6000000 // 48 MBit/s
@@ -158,9 +160,47 @@ void do_work(int argc, char *argv[], metric_t * me, int64_t timeout_us)
 		usage(argc, argv);
 }
 
+struct fsm_pred_throuput_state {
+	fsm_state_t *fsm_st;
+	int power;
+};
+
+struct fsm_pred_throuput {
+	struct fsm_pred_throuput_state on;
+	struct fsm_pred_throuput_state off;
+	fsm_state_t *cur;
+} fsm_pred_data;
+
+fsm_state_t *fsm_pred_throuput_next_state(fsm_t *fsm, const char *metric, sample_value_t value)
+{
+	if (value > 0)
+		return fsm_pred_data.on.fsm_st;
+	else
+		return fsm_pred_data.off.fsm_st;
+}
+
+int fsm_pred_throuput_metric_from_state(fsm_state_t *state,
+					const char *metric_name,
+					sample_value_t *value)
+{
+	struct fsm_pred_throuput_state *st = fsm_state_get_user(state);
+	if (strcmp(metric_name, "throughput") == 0) {
+		*value = st->power;
+		return 0;
+	} else
+		return 1;
+}
+
 int main(int argc, char *argv[])
 {
-	prediction_t * mp = prediction_simple_create(1000);
+	fsm_t *pred_fsm = fsm_create(fsm_pred_throuput_next_state, NULL, &fsm_pred_data);
+	fsm_pred_data.on.fsm_st = fsm_add_state(pred_fsm, "ON", &fsm_pred_data.on);
+	fsm_pred_data.off.fsm_st = fsm_add_state(pred_fsm, "OFF", &fsm_pred_data.off);
+	fsm_pred_data.cur = fsm_pred_data.off.fsm_st;
+
+	prediction_t * mp = prediction_fsm_create(pred_fsm,
+						  fsm_pred_throuput_metric_from_state,
+						  1000000, 1000);
 	assert(mp);
 
 	metric_t * me = metric_create("throughput", 1000);

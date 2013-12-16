@@ -1,5 +1,6 @@
 #include "history_fsm.h"
 #include <string.h>
+#include <inttypes.h>
 
 static size_t history_fsm_entry_count(history_fsm_t *h_fsm)
 {
@@ -13,6 +14,12 @@ static size_t history_fsm_entry(history_fsm_t *h_fsm, sample_time_t time)
 	if (i > entries_count)
 		i = entries_count - 1;
 	return i;
+}
+
+static sample_time_t history_fsm_entry_to_time(history_fsm_t *h_fsm, size_t i)
+{
+	sample_time_t time = i * h_fsm->transition_resolution_us;
+	return time;
 }
 
 history_fsm_t *history_fsm_create(sample_time_t prediction_length_us,
@@ -43,7 +50,7 @@ int history_fsm_state_attach_metric(history_fsm_state_t *hf_state, const char *n
 	return 0;
 }
 
-static int history_fsm_state_transition_add(history_fsm_t *h_fsm, history_fsm_state_t *new_state)
+static int history_fsm_state_transition_add(history_fsm_t *h_fsm, history_fsm_state_t *state, history_fsm_state_t *new_state)
 {
 	history_fsm_transition_t *hf_transition = malloc(sizeof(history_fsm_transition_t));
 	if (!hf_transition)
@@ -52,6 +59,7 @@ static int history_fsm_state_transition_add(history_fsm_t *h_fsm, history_fsm_st
 	INIT_LIST_HEAD(&hf_transition->list);
 	hf_transition->dst_state = new_state;
 	hf_transition->cnt = calloc(history_fsm_entry_count(h_fsm), sizeof(uint32_t));
+	list_add(&hf_transition->list, &state->transitions);
 
 	return 0;
 }
@@ -66,10 +74,11 @@ int history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state)
 
 	INIT_LIST_HEAD(&hf_state->list);
 	INIT_LIST_HEAD(&hf_state->attachedMetrics);
+	INIT_LIST_HEAD(&hf_state->transitions);
 	hf_state->user_fsm_state = user_fsm_state;
 
 	list_for_each_entry(pos, &h_fsm->states, list) {
-		history_fsm_state_transition_add(h_fsm, hf_state);
+		history_fsm_state_transition_add(h_fsm, pos, hf_state);
 	}
 
 	list_add(&hf_state->list, &h_fsm->states);
@@ -84,7 +93,10 @@ int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, 
 {
 	history_fsm_transition_t *pos;
 
-	if (!h_fsm->cur || h_fsm->cur->user_fsm_state == dst_fsm_state)
+	if (!h_fsm->cur)
+		return 1;
+
+	if (h_fsm->cur->user_fsm_state == dst_fsm_state)
 		return 0;
 
 	/* look for the new state */
@@ -97,6 +109,111 @@ int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, 
 	}
 
 	return 1;
+}
+
+static history_fsm_state_t *
+history_fsm_state_find(history_fsm_t *h_fsm, fsm_state_t *fsm_state)
+{
+	history_fsm_state_t *pos;
+
+	/* look for the new state */
+	list_for_each_entry(pos, &h_fsm->states, list) {
+		if (pos->user_fsm_state == fsm_state) {
+			return pos;
+		}
+	}
+	return NULL;
+}
+
+static history_fsm_transition_t *
+history_fsm_state_transition_find(history_fsm_t *h_fsm,
+				  fsm_state_t *src_fsm_state,
+				  fsm_state_t *dst_fsm_state)
+{
+	history_fsm_transition_t *pos;
+
+	history_fsm_state_t *src = history_fsm_state_find(h_fsm, src_fsm_state);
+	if (!src)
+		return NULL;
+
+	/* look for the new state */
+	list_for_each_entry(pos, &src->transitions, list) {
+		if (pos->dst_state->user_fsm_state == dst_fsm_state) {
+			return pos;
+		}
+	}
+
+	return NULL;
+}
+
+int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm,
+					 fsm_state_t *src_fsm_state,
+					 fsm_state_t *dst_fsm_state,
+					 FILE *stream)
+{
+	history_fsm_transition_t *trans ;
+	int i;
+
+	trans = history_fsm_state_transition_find(h_fsm, src_fsm_state, dst_fsm_state);
+
+	if (!trans) {
+		fprintf(stream, "Error: At least one of the state cannot be found\n");
+		return 1;
+	}
+
+	fprintf(stream, "Time (µs, step = %"PRIu64"), '%s'' -> '%s' probability density\n",
+		h_fsm->transition_resolution_us,
+		src_fsm_state->name, dst_fsm_state->name);
+
+	/* loop pour afficher les valeurs ! */
+	for (i = 0; i < history_fsm_entry_count(h_fsm); i++)
+		fprintf(stream, "%"PRIu64", %u\n",
+			history_fsm_entry_to_time(h_fsm, i),
+			trans->cnt[i]);
+	return 0;
+}
+
+void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const char *basename)
+{
+	history_fsm_state_t *pos_s;
+	history_fsm_transition_t *pos_t;
+	int i;
+
+	list_for_each_entry(pos_s, &h_fsm->states, list) {
+		char path[4096];
+		snprintf(path, sizeof(path), "%s_st_%s.csv", basename, pos_s->user_fsm_state->name);
+
+		FILE *f = fopen(path, "w");
+		if (!f) {
+			fprintf(stderr, "Err: Cannot open '%s'\n", path);
+			continue;
+		}
+
+		/* HEADER */
+		fprintf(f, "Time (µs, step = %"PRIu64")",
+			h_fsm->transition_resolution_us);
+
+		list_for_each_entry(pos_t, &pos_s->transitions, list) {
+			fprintf(f, ", '%s'' -> '%s' probability density",
+				pos_s->user_fsm_state->name, pos_t->dst_state->user_fsm_state->name);
+		}
+
+		fprintf(f, "\n");
+
+		/* VALUES */
+		for (i = 0; i < history_fsm_entry_count(h_fsm); i++) {
+			fprintf(f, "%"PRIu64"",
+				history_fsm_entry_to_time(h_fsm, i));
+
+			list_for_each_entry(pos_t, &pos_s->transitions, list) {
+				fprintf(f, ", %u",
+					pos_t->cnt[i]);
+			}
+			fprintf(f, "\n");
+		}
+
+		fclose(f);
+	}
 }
 
 void history_fsm_reset_transitions(history_fsm_t *h_fsm)

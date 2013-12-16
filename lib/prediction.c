@@ -66,7 +66,6 @@ prediction_list_t *prediction_list_create()
 	INIT_LIST_HEAD(pl);
 	return pl;
 }
-
 void prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr)
 {
 	list_add_tail(&pmr->list, pl);
@@ -135,6 +134,13 @@ prediction_priv_t * prediction_priv(prediction_t* p)
 	return (prediction_priv_t*) p;
 }
 
+uint32_t prediction_metrics_count(prediction_t* p)
+{
+	prediction_priv_t *p_priv = prediction_priv(p);
+	return p_priv->metrics_count;
+}
+
+
 prediction_t * prediction_create(prediction_check_t check,
 				 prediction_exec_t exec,
 				 prediction_delete_t dtor,
@@ -145,6 +151,7 @@ prediction_t * prediction_create(prediction_check_t check,
 		return NULL;
 
 	INIT_LIST_HEAD(&p_priv->metrics);
+	p_priv->metrics_count = 0;
 	p_priv->check = check;
 	p_priv->exec = exec;
 	p_priv->dtor = dtor;
@@ -248,6 +255,7 @@ void prediction_delete(prediction_t *p)
 	/* free the metrics list */
 	list_for_each_entry_safe(pos, n, &p_priv->metrics, list) {
 		list_del(&(pos->list));
+		p_priv->metrics_count--;
 		free(pos);
 	}
 
@@ -292,7 +300,8 @@ int prediction_attach_metric(prediction_t *p, metric_t *m)
 	INIT_LIST_HEAD(&pm->list);
 	pm->base = m;
 
-	list_add_tail(&pm->list, &p_priv->metrics);
+	list_add(&pm->list, &p_priv->metrics);
+	p_priv->metrics_count++;
 
 	return 0;
 }

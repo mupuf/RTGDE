@@ -20,6 +20,7 @@ typedef struct {
 	prediction_t base;
 
 	struct list_head metrics;
+	uint32_t metrics_count;
 
 	prediction_check_t check;
 	prediction_exec_t exec;
@@ -38,5 +39,6 @@ prediction_t * prediction_create(prediction_check_t check,
 prediction_priv_t * prediction_priv(prediction_t* p);
 prediction_metric_result_t *prediction_metric_result_create(const char *name);
 void prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr);
+uint32_t prediction_metrics_count(prediction_t* p);
 
 #endif // PREDICTION_PRIV_H
