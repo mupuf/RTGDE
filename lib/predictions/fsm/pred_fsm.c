@@ -57,6 +57,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 		metric_dump_history(pos_m->base, history[i], hsize[i]);
 		cur_index[i] = 0;
 		metrics_name[i] = strdup(metric_name(pos_m->base));
+		i++;
 	}
 
 	/* train the model */
@@ -78,33 +79,48 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 		if (min_time == (sample_time_t)-1)
 			break;
 
+		/* we have selected a value, consume it */
+		sample_t sample = history[min_time_idx][cur_index[min_time_idx]];
+		cur_index[min_time_idx]++;
+
+		/* init last change */
+		if (last_change == 0)
+			last_change = sample.time;
+
 		/* update the user_fsm */
 		new_state = fsm_update_state(p_fsm->fsm,
 						metrics_name[min_time_idx],
-						history[min_time_idx][cur_index[min_time_idx]].value);
-
-		/* we have selected a value, consume it */
-		cur_index[min_time_idx]++;
+						sample.value);
 
 		/* update the history_fsm if needed */
-		sample_time_t time = history[min_time_idx][cur_index[min_time_idx]].time - last_change;
+		sample_time_t time = sample.time - last_change;
 
 		if (history_fsm_state_changed(p_fsm->hfsm, new_state, time)) {
 			/* add the missing state */
 			history_fsm_state_add(p_fsm->hfsm, new_state);
 
-			printf("added state %s", new_state->name);
-
 			/* TODO: add the values of the output metrics */
 
 			/* check everything is right */
 			int ret = history_fsm_state_changed(p_fsm->hfsm, new_state, time);
-			printf(": new ret = %i\n", ret);
 			assert(ret == 0);
 
 		}
-		last_change = history[min_time_idx][cur_index[min_time_idx]].time;
+		last_change = sample.time;
 	}
+
+	/* free all the metrics */
+	i = 0;
+	list_for_each_entry(pos_m, &p_priv->metrics, list) {
+		free(history[i]);
+		free(metrics_name[i]);
+		i++;
+	}
+	free(history);
+	free(metrics_name);
+	free(cur_index);
+	free(hsize);
+
 
 	//history_fsm_state_trans_prob_density(p_fsm->fsm, )
 	history_fsm_transitions_prob_density_to_csv(p_fsm->hfsm, "fsm_pred-throuput");
@@ -112,6 +128,8 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 	/* start predicting */
 		/* for all output metrics */
 		/* output the different graphs */
+
+	history_fsm_reset_transitions(p_fsm->hfsm);
 
 
 	/* all input metrics */

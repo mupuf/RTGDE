@@ -79,6 +79,7 @@ int history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state)
 
 	list_for_each_entry(pos, &h_fsm->states, list) {
 		history_fsm_state_transition_add(h_fsm, pos, hf_state);
+		history_fsm_state_transition_add(h_fsm, hf_state, pos);
 	}
 
 	list_add(&hf_state->list, &h_fsm->states);
@@ -247,6 +248,7 @@ static void history_fsm_state_delete(history_fsm_state_t *hf_state)
 	}
 	list_for_each_entry_safe(pos_t, n_t, &hf_state->transitions, list) {
 		list_del(&(pos_t->list));
+		free(pos_t->cnt);
 		free(pos_t);
 	}
 	free(hf_state);
