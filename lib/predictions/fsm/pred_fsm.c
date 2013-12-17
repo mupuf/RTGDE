@@ -38,7 +38,6 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 	prediction_fsm_t *p_fsm = prediction_fsm(p);
 	prediction_priv_t *p_priv = prediction_priv(p);
 	prediction_metric_t *pos_m;
-	sample_time_t last_change = 0;
 	int i = 0;
 
 	prediction_list_t *pl = prediction_list_create();
@@ -83,30 +82,22 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 		sample_t sample = history[min_time_idx][cur_index[min_time_idx]];
 		cur_index[min_time_idx]++;
 
-		/* init last change */
-		if (last_change == 0)
-			last_change = sample.time;
-
 		/* update the user_fsm */
 		new_state = fsm_update_state(p_fsm->fsm,
 						metrics_name[min_time_idx],
 						sample.value);
 
-		/* update the history_fsm if needed */
-		sample_time_t time = sample.time - last_change;
-
-		if (history_fsm_state_changed(p_fsm->hfsm, new_state, time)) {
+		if (history_fsm_state_changed(p_fsm->hfsm, new_state, sample.time)) {
 			/* add the missing state */
 			history_fsm_state_add(p_fsm->hfsm, new_state);
 
 			/* TODO: add the values of the output metrics */
 
 			/* check everything is right */
-			int ret = history_fsm_state_changed(p_fsm->hfsm, new_state, time);
+			int ret = history_fsm_state_changed(p_fsm->hfsm, new_state, sample.time);
 			assert(ret == 0);
 
 		}
-		last_change = sample.time;
 	}
 
 	/* free all the metrics */

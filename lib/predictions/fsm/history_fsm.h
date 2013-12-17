@@ -34,6 +34,7 @@ typedef struct {
 	sample_time_t transition_resolution_us;
 
 	history_fsm_state_t *cur;
+	sample_time_t time_state_changed;
 } history_fsm_t;
 
 history_fsm_t *history_fsm_create(sample_time_t prediction_length_us,

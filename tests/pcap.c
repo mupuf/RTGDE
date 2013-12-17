@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
 
 	prediction_t * mp = prediction_fsm_create(pred_fsm,
 						  fsm_pred_throuput_metric_from_state,
-						  1000000, 1000);
+						  100000, 10);
 	assert(mp);
 
 	metric_t * me = metric_create("throughput", 1000);
