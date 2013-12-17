@@ -25,6 +25,7 @@ typedef struct {
 	struct list_head list;
 	history_fsm_state_t *dst_state;
 	uint32_t *cnt;
+	uint64_t total_count;
 } history_fsm_transition_t;
 
 typedef struct {

@@ -52,6 +52,8 @@ int history_fsm_state_attach_metric(history_fsm_state_t *hf_state, const char *n
 
 static int history_fsm_state_transition_add(history_fsm_t *h_fsm, history_fsm_state_t *state, history_fsm_state_t *new_state)
 {
+	int i;
+
 	history_fsm_transition_t *hf_transition = malloc(sizeof(history_fsm_transition_t));
 	if (!hf_transition)
 		return 1;
@@ -59,6 +61,9 @@ static int history_fsm_state_transition_add(history_fsm_t *h_fsm, history_fsm_st
 	INIT_LIST_HEAD(&hf_transition->list);
 	hf_transition->dst_state = new_state;
 	hf_transition->cnt = calloc(history_fsm_entry_count(h_fsm), sizeof(uint32_t));
+	for (i = 0; i < history_fsm_entry_count(h_fsm); i++)
+		hf_transition->cnt[i] = 0;
+	hf_transition->total_count = 0;
 	list_add(&hf_transition->list, &state->transitions);
 
 	return 0;
@@ -109,6 +114,7 @@ int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, 
 		if (pos->dst_state->user_fsm_state == dst_fsm_state) {
 			size_t i = history_fsm_entry(h_fsm, timer_diff);
 			pos->cnt[i]++;
+			pos->total_count++;
 			h_fsm->cur = pos->dst_state;
 			h_fsm->time_state_changed = time;
 			return 0;
@@ -213,8 +219,8 @@ void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const cha
 				history_fsm_entry_to_time(h_fsm, i));
 
 			list_for_each_entry(pos_t, &pos_s->transitions, list) {
-				fprintf(f, ", %u",
-					pos_t->cnt[i]);
+				fprintf(f, ", %f",
+					((double)pos_t->cnt[i]) / pos_t->total_count);
 			}
 			fprintf(f, "\n");
 		}
@@ -233,6 +239,7 @@ void history_fsm_reset_transitions(history_fsm_t *h_fsm)
 		list_for_each_entry(pos_t, &pos_s->transitions, list) {
 			for (i = 0; i < history_fsm_entry_count(h_fsm); i++)
 				pos_t->cnt[i] = 0;
+			pos_t->total_count = 0;
 		}
 	}
 }
