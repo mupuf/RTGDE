@@ -8,7 +8,7 @@
 #include <predictions/pred_fsm.h>
 #include <models/dummy.h>
 
-#define NETIF_DATARATE 6000000 // 48 MBit/s
+#define NETIF_DATARATE 12500000 // 100 MBit/s
 
 #ifdef HAS_LIBPCAP
 #include <pcap.h>
@@ -122,14 +122,23 @@ void read_from_file(metric_t * me, const char *filepath)
 		fprintf(stderr, "Invalid magic number. The file '%s' isn't a pcap file\n", filepath);
 	}
 
+	sample_time_t last = 0;
 	while (!pcap_read_packet_header(finput, &pkt))
 	{
+		if (pkt.len < 200)
+			continue;
+
+		if (pkt.timestamp <= last)
+			pkt.timestamp = last + 1;
+
 		uint64_t time_end = pkt.timestamp + pkt.len * 1000000 / NETIF_DATARATE;
 
 		metric_update(me, pkt.timestamp - 1, 0);
 		metric_update(me, pkt.timestamp, NETIF_DATARATE);
 		metric_update(me, time_end, NETIF_DATARATE);
 		metric_update(me, time_end + 1, 0);
+
+		last = time_end + 1;
 	}
 
 	/* wait for the prediction to be done and quit */
@@ -200,7 +209,7 @@ int main(int argc, char *argv[])
 
 	prediction_t * mp = prediction_fsm_create(pred_fsm,
 						  fsm_pred_throuput_metric_from_state,
-						  100000, 10);
+						  250000, 10);
 	assert(mp);
 
 	metric_t * me = metric_create("throughput", 1000);

@@ -1,6 +1,7 @@
 #include "history_fsm.h"
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 static size_t history_fsm_entry_count(history_fsm_t *h_fsm)
 {
@@ -107,6 +108,8 @@ int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, 
 	if (h_fsm->cur->user_fsm_state == dst_fsm_state)
 		return 0;
 
+	if (time < h_fsm->time_state_changed)
+		assert(time > h_fsm->time_state_changed);
 	sample_time_t timer_diff = time - h_fsm->time_state_changed;
 
 	/* look for the new state */
@@ -174,7 +177,7 @@ int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm,
 		return 1;
 	}
 
-	fprintf(stream, "Time (µs, step = %"PRIu64"), '%s'' -> '%s' probability density\n",
+	fprintf(stream, "\"Time (µs, step = %"PRIu64")\", \"'%s'' -> '%s' probability density\"\n",
 		h_fsm->transition_resolution_us,
 		src_fsm_state->name, dst_fsm_state->name);
 
@@ -203,11 +206,11 @@ void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const cha
 		}
 
 		/* HEADER */
-		fprintf(f, "Time (µs, step = %"PRIu64")",
+		fprintf(f, "\"Time (µs, step = %"PRIu64")\"",
 			h_fsm->transition_resolution_us);
 
 		list_for_each_entry(pos_t, &pos_s->transitions, list) {
-			fprintf(f, ", '%s'' -> '%s' probability density",
+			fprintf(f, ", \"'%s'' -> '%s' probability density\"",
 				pos_s->user_fsm_state->name, pos_t->dst_state->user_fsm_state->name);
 		}
 
