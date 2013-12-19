@@ -216,7 +216,7 @@ void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm,
 			h_fsm->transition_resolution_us);
 
 		list_for_each_entry(pos_t, &pos_s->transitions, list) {
-			fprintf(f, ", \"'%s'' -> '%s' probability density\"",
+			fprintf(f, ", \"'%s' -> '%s' probability density\"",
 				pos_s->user_fsm_state->name,
 				pos_t->dst_state->user_fsm_state->name);
 		}
