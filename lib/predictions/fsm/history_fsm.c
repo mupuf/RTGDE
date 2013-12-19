@@ -108,8 +108,10 @@ int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, 
 	if (h_fsm->cur->user_fsm_state == dst_fsm_state)
 		return 0;
 
-	if (time < h_fsm->time_state_changed)
+	if (time < h_fsm->time_state_changed) {
 		assert(time > h_fsm->time_state_changed);
+		return 0;
+	}
 	sample_time_t timer_diff = time - h_fsm->time_state_changed;
 
 	/* look for the new state */
