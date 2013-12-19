@@ -53,7 +53,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 	list_for_each_entry(pos_m, &p_priv->metrics, list) {
 		hsize[i] = metric_history_size(pos_m->base);
 		history[i] = calloc(hsize[i], sizeof(sample_t));
-		metric_dump_history(pos_m->base, history[i], hsize[i]);
+		hsize[i] = metric_dump_history(pos_m->base, history[i], hsize[i]);
 		cur_index[i] = 0;
 		metrics_name[i] = strdup(metric_name(pos_m->base));
 		i++;
