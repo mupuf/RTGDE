@@ -13,7 +13,7 @@ typedef struct {
 
 } history_t;
 
-typedef uint16_t history_size_t;
+typedef uint32_t history_size_t;
 typedef history_size_t history_index_t;
 
 history_t * history_create(history_size_t size);
