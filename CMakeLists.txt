@@ -41,6 +41,9 @@ target_link_libraries(test_flowgraph rtgde)
 add_executable(test_pcap tests/pcap.c)
 target_link_libraries(test_pcap rtgde ${PCAP_LIBRARY})
 
+add_executable(test_nv_graph tests/nv_graph.c)
+target_link_libraries(test_nv_graph rtgde)
+
 install(TARGETS rtgde DESTINATION "lib/")
 install(FILES "${CMAKE_BIN_DIR}/include" DESTINATION "${CMAKE_INSTALL_PREFIX}/include/rtgde/")
 
