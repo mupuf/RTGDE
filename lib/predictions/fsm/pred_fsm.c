@@ -6,6 +6,8 @@
 #include <string.h>
 #include <assert.h>
 
+#define PREDICTION_NAME "pred_fsm"
+
 typedef struct {
 	struct list_head list;
 	char *name;
@@ -16,6 +18,7 @@ typedef struct {
 	sample_time_t transition_resolution_us;
 	prediction_fsm_metric_from_state_t metric_state;
 	fsm_t *fsm;
+	char *prob_density_filename;
 
 	history_fsm_t *hfsm;
 
@@ -25,7 +28,14 @@ typedef struct {
 
 prediction_fsm_t * prediction_fsm(prediction_t* p)
 {
-	return (prediction_fsm_t*) p->user;
+	if (strcmp(prediction_name(p), PREDICTION_NAME) == 0)
+		return (prediction_fsm_t*) p->user;
+	else {
+		fprintf(stderr,
+			"Tried to transtype prediction '%s' into '%s'. Abort.\n",
+			prediction_name(p), PREDICTION_NAME);
+		return NULL;
+	}
 }
 
 static int prediction_fsm_check(prediction_t *p)
@@ -114,7 +124,11 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 
 
 	//history_fsm_state_trans_prob_density(p_fsm->fsm, )
-	history_fsm_transitions_prob_density_to_csv(p_fsm->hfsm, "fsm_pred-throuput");
+	if (p_fsm->prob_density_filename) {
+		history_fsm_transitions_prob_density_to_csv(p_fsm->hfsm,
+							    p_fsm->prob_density_filename,
+							    prediction_metrics_count(p));
+	}
 
 	/* start predicting */
 		/* for all output metrics */
@@ -161,6 +175,8 @@ static void prediction_fsm_dtor(prediction_t *p)
 {
 	prediction_fsm_t *p_fsm = prediction_fsm(p);
 	history_fsm_delete(p_fsm->hfsm);
+	if (p_fsm->prob_density_filename)
+		free(p_fsm->prob_density_filename);
 	free(p->user);
 }
 
@@ -177,11 +193,13 @@ prediction_t * prediction_fsm_create(fsm_t *fsm,
 	p_fsm->transition_resolution_us = transition_resolution_us;
 	p_fsm->metric_state = metric_state;
 	p_fsm->fsm = fsm;
+	p_fsm->prob_density_filename = NULL;
 	p_fsm->hfsm = history_fsm_create(prediction_length_us, transition_resolution_us);
 
 	return prediction_create(prediction_fsm_check,
 				 prediction_fsm_exec,
 				 prediction_fsm_dtor,
+				 "pred_fsm",
 				 (void *)p_fsm);
 }
 
@@ -196,4 +214,11 @@ int prediction_fsm_add_output_metric(prediction_t *pred_fsm, const char *metric_
 	list_add(&fom->list, &prediction_fsm(pred_fsm)->output_metrics);
 
 	return 0;
+}
+
+void prediction_fsm_dump_probability_density(prediction_t *pred_fsm,
+					    const char *base_filename)
+{
+	prediction_fsm_t *p_fsm = prediction_fsm(pred_fsm);
+	p_fsm->prob_density_filename = strdup(base_filename);
 }

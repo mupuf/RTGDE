@@ -102,14 +102,15 @@ int fsm_pred_throuput_metric_from_state(fsm_state_t *state,
 int main(int argc, char *argv[])
 {
 	fsm_t *pred_fsm = fsm_create(fsm_pred_throuput_next_state, NULL, &fsm_pred_data);
-	fsm_pred_data.on.fsm_st = fsm_add_state(pred_fsm, "ON", &fsm_pred_data.on);
-	fsm_pred_data.off.fsm_st = fsm_add_state(pred_fsm, "OFF", &fsm_pred_data.off);
+	fsm_pred_data.on.fsm_st = fsm_add_state(pred_fsm, "ACTIVE", &fsm_pred_data.on);
+	fsm_pred_data.off.fsm_st = fsm_add_state(pred_fsm, "IDLE", &fsm_pred_data.off);
 	fsm_pred_data.cur = fsm_pred_data.off.fsm_st;
 
 	prediction_t * mp = prediction_fsm_create(pred_fsm,
 						  fsm_pred_throuput_metric_from_state,
 						  1000, 1);
 	assert(mp);
+	prediction_fsm_dump_probability_density(mp, "fsm_pred_pgraph");
 
 	metric_t * me = metric_create("pgraph usage", 1000000);
 	assert(me);

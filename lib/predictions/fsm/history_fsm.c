@@ -179,7 +179,8 @@ int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm,
 		return 1;
 	}
 
-	fprintf(stream, "\"Time (µs, step = %"PRIu64")\", \"'%s'' -> '%s' probability density\"\n",
+	fprintf(stream,
+		"\"Time (µs, step = %"PRIu64")\", \"'%s'' -> '%s' probability density\"\n",
 		h_fsm->transition_resolution_us,
 		src_fsm_state->name, dst_fsm_state->name);
 
@@ -191,7 +192,9 @@ int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm,
 	return 0;
 }
 
-void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const char *basename)
+void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm,
+						 const char *basename,
+						 int number)
 {
 	history_fsm_state_t *pos_s;
 	history_fsm_transition_t *pos_t;
@@ -199,7 +202,8 @@ void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const cha
 
 	list_for_each_entry(pos_s, &h_fsm->states, list) {
 		char path[4096];
-		snprintf(path, sizeof(path), "%s_st_%s.csv", basename, pos_s->user_fsm_state->name);
+		snprintf(path, sizeof(path), "%s_%i_st_%s.csv",
+			 basename, number, pos_s->user_fsm_state->name);
 
 		FILE *f = fopen(path, "w");
 		if (!f) {
@@ -213,7 +217,8 @@ void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const cha
 
 		list_for_each_entry(pos_t, &pos_s->transitions, list) {
 			fprintf(f, ", \"'%s'' -> '%s' probability density\"",
-				pos_s->user_fsm_state->name, pos_t->dst_state->user_fsm_state->name);
+				pos_s->user_fsm_state->name,
+				pos_t->dst_state->user_fsm_state->name);
 		}
 
 		fprintf(f, "\n");

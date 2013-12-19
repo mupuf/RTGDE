@@ -14,5 +14,7 @@ prediction_t *prediction_fsm_create(fsm_t *fsm,
 				    sample_time_t transition_resolution_us);
 
 int prediction_fsm_add_output_metric(prediction_t *pred_fsm, const char *metric_name);
+void prediction_fsm_dump_probability_density(prediction_t *pred_fsm,
+					    const char *filename_pattern);
 
 #endif

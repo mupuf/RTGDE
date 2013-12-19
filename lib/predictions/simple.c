@@ -72,5 +72,6 @@ prediction_t * prediction_simple_create(sample_time_t prediction_length)
 	return prediction_create(prediction_simple_check,
 				 prediction_simple_exec,
 				 prediction_simple_dtor,
+				 "pred_simple",
 				 (void *)simple);
 }

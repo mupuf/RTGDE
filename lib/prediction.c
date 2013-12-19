@@ -143,7 +143,7 @@ uint32_t prediction_metrics_count(prediction_t* p)
 
 prediction_t * prediction_create(prediction_check_t check,
 				 prediction_exec_t exec,
-				 prediction_delete_t dtor,
+				 prediction_delete_t dtor, const char *name,
 				 void *user)
 {
 	prediction_priv_t *p_priv = malloc(sizeof(prediction_priv_t));
@@ -151,6 +151,7 @@ prediction_t * prediction_create(prediction_check_t check,
 		return NULL;
 
 	INIT_LIST_HEAD(&p_priv->metrics);
+	p_priv->name = strdup(name);
 	p_priv->metrics_count = 0;
 	p_priv->check = check;
 	p_priv->exec = exec;
@@ -160,6 +161,12 @@ prediction_t * prediction_create(prediction_check_t check,
 	p_priv->prediction_count = 0;
 
 	return (prediction_t *)p_priv;
+}
+
+const char *prediction_name(prediction_t* p)
+{
+	prediction_priv_t *p_priv = prediction_priv(p);
+	return p_priv->name;
 }
 
 prediction_list_t *prediction_exec(prediction_t *p)
@@ -265,6 +272,7 @@ void prediction_delete(prediction_t *p)
 	/* POISON: detect use after free or double-delete */
 	p_priv->csv_filename_format = (char *)42;
 
+	free(p_priv->name);
 	free(p);
 }
 

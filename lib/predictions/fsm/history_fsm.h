@@ -45,7 +45,7 @@ int history_fsm_state_attach_metric(history_fsm_state_t *hf_state, const char *n
 int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, sample_time_t time);
 int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm, fsm_state_t *src_fsm_state,
 					 fsm_state_t *dst_fsm_state, FILE *stream);
-void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const char *basename);
+void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm, const char *basename, int number);
 void history_fsm_reset_transitions(history_fsm_t *h_fsm);
 void history_fsm_delete(history_fsm_t *h_fsm);
 
