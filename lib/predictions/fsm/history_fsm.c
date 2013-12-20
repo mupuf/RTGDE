@@ -192,6 +192,13 @@ int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm,
 	return 0;
 }
 
+static void csv_print_line(history_fsm_t *h_fsm, FILE *f, int i, const char *line)
+{
+	fprintf(f, "%"PRIu64"",
+		    history_fsm_entry_to_time(h_fsm, i));
+	fputs(line, f);
+}
+
 void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm,
 						 const char *basename,
 						 int number)
@@ -201,7 +208,7 @@ void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm,
 	int i;
 
 	list_for_each_entry(pos_s, &h_fsm->states, list) {
-		char path[4096];
+		static char path[4096];
 		snprintf(path, sizeof(path), "%s_%i_st_%s.csv",
 			 basename, number, pos_s->user_fsm_state->name);
 
@@ -224,15 +231,30 @@ void history_fsm_transitions_prob_density_to_csv(history_fsm_t *h_fsm,
 		fprintf(f, "\n");
 
 		/* VALUES */
+		static char b1[1024], b2[1024];
+		char *cur = b1, *last = NULL;
+		size_t o = 0, last_printed = 0;
 		for (i = 0; i < history_fsm_entry_count(h_fsm); i++) {
-			fprintf(f, "%"PRIu64"",
-				history_fsm_entry_to_time(h_fsm, i));
-
+			o = 0;
 			list_for_each_entry(pos_t, &pos_s->transitions, list) {
-				fprintf(f, ", %f",
+				o += snprintf(cur + o, 1024 - o, ", %f",
 					((double)pos_t->cnt[i]) / pos_t->total_count);
 			}
-			fprintf(f, "\n");
+			snprintf(cur + o, 1024 - o, "\n");
+
+			if (last) {
+				if (strcmp(cur, last) != 0) {
+					if (!last_printed)
+						csv_print_line(h_fsm, f, i-1, last);
+					csv_print_line(h_fsm, f, i, cur);
+					last_printed = 1;
+				} else
+					last_printed = 0;
+			} else
+				csv_print_line(h_fsm, f, i, cur);
+
+			last = cur;
+			cur = (cur == b1 ? b2 : b1);
 		}
 
 		fclose(f);
