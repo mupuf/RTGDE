@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
 	prediction_t * mp = prediction_fsm_create(pred_fsm,
 						  fsm_pred_throuput_metric_from_state,
-						  1000, 1);
+						  100000, 1);
 	assert(mp);
 	prediction_fsm_dump_probability_density(mp, "fsm_pred_pgraph");
 

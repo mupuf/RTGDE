@@ -92,7 +92,7 @@ int history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state)
 
 	if (!h_fsm->cur) {
 		h_fsm->cur = hf_state;
-		h_fsm->time_state_changed = 0;
+		h_fsm->time_state_changed = (sample_time_t)-1;
 	}
 
 	return 0;
@@ -108,18 +108,21 @@ int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, 
 	if (h_fsm->cur->user_fsm_state == dst_fsm_state)
 		return 0;
 
-	if (time < h_fsm->time_state_changed) {
+	if (time <= (h_fsm->time_state_changed + 1)) {
 		assert(time > h_fsm->time_state_changed);
 		return 0;
 	}
+
 	sample_time_t timer_diff = time - h_fsm->time_state_changed;
 
 	/* look for the new state */
 	list_for_each_entry(pos, &h_fsm->cur->transitions, list) {
 		if (pos->dst_state->user_fsm_state == dst_fsm_state) {
 			size_t i = history_fsm_entry(h_fsm, timer_diff);
-			pos->cnt[i]++;
-			pos->total_count++;
+			if (h_fsm->time_state_changed != (sample_time_t)-1) {
+				pos->cnt[i]++;
+				pos->total_count++;
+			}
 			h_fsm->cur = pos->dst_state;
 			h_fsm->time_state_changed = time;
 			return 0;
