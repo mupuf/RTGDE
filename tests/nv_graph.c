@@ -35,7 +35,6 @@ void read_file(metric_t * me, FILE *finput)
 		time /= 1000;
 
 		if (last_val == val) {
-			printf("last_val == val\n");
 			continue;
 		}
 
@@ -108,7 +107,7 @@ int main(int argc, char *argv[])
 
 	prediction_t * mp = prediction_fsm_create(pred_fsm,
 						  fsm_pred_throuput_metric_from_state,
-						  100000, 1);
+						  100000, 10);
 	assert(mp);
 	prediction_fsm_dump_probability_density(mp, "fsm_pred_pgraph");
 
