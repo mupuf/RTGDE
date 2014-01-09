@@ -125,6 +125,18 @@ sample_t metric_get_last(metric_t *m)
 	return s;
 }
 
+int metric_is_empty(metric_t *m)
+{
+	metric_priv_t *m_priv = metric_priv(m);
+	int empty;
+
+	pthread_mutex_lock(&m_priv->history_mutex);
+	empty = (m_priv->put == m_priv->get && m_priv->put == 0);
+	pthread_mutex_unlock(&m_priv->history_mutex);
+
+	return empty;
+}
+
 history_size_t metric_history_size(metric_t *m)
 {
 	metric_priv_t *m_priv = metric_priv(m);
