@@ -23,7 +23,7 @@ void die(const char *str)
 void read_file(metric_t * me, FILE *finput)
 {
 	size_t len = 0;
-	char *line;
+	char *line = NULL;
 	uint64_t time, time_diff;
 	uint32_t val, last_val = -1;
 	uint64_t count = 0;
@@ -44,6 +44,8 @@ void read_file(metric_t * me, FILE *finput)
 		last_val = val;
 		count++;
 	}
+
+	free(line);
 }
 
 void usage(int argc, char **argv)
@@ -61,9 +63,9 @@ void do_work(int argc, char *argv[], flowgraph_t *f, metric_t * me)
 			die("Cannot open the input file");
 	}
 
-	read_file(me, finput);
 	rtgde_start(f);
-	sleep(0.5);
+	read_file(me, finput);
+	sleep(1);
 	flowgraph_teardown(f);
 }
 

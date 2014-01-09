@@ -190,7 +190,7 @@ prediction_list_t *prediction_exec(prediction_t *p)
 	/* list all metrics */
 	list_for_each_entry(pos, &p_priv->metrics, list) {
 		prediction_metric_result_t *pred;
-		sample_time_t last_sample_time;
+		sample_time_t last_sample_time = 0;
 		char filename[PATH_MAX];
 		history_size_t mh_size;
 		sample_t *bh;
@@ -204,6 +204,8 @@ prediction_list_t *prediction_exec(prediction_t *p)
 			fprintf(stderr,
 				"Error, can't find '%s' in the prediction list\n",
 				metric_name(pos->base));
+			continue;
+
 		}
 
 		printf("filename = '%s'\n", filename);
