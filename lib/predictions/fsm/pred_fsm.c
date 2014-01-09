@@ -132,6 +132,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 
 	/* start predicting */
 		/* for all output metrics */
+
 		/* output the different graphs */
 
 	history_fsm_reset_transitions(p_fsm->hfsm);
@@ -142,6 +143,9 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 	list_for_each_entry(pos, &p_priv->metrics, list) {
 		prediction_metric_result_t *r;
 		r = prediction_metric_result_create(metric_name(pos->base));
+
+		if (metric_is_empty(pos->base))
+			continue;
 
 		graph_add_point((graph_t *)r->high,
 				0,

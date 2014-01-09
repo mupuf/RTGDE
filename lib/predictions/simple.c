@@ -30,6 +30,9 @@ prediction_list_t *prediction_simple_exec(prediction_t *p)
 		prediction_metric_result_t *r;
 		r = prediction_metric_result_create(metric_name(pos->base));
 
+		if (metric_is_empty(pos->base))
+			continue;
+
 		graph_add_point((graph_t *)r->high,
 				0,
 				metric_get_last(pos->base).value);
