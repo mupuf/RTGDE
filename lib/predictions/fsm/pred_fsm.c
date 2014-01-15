@@ -177,10 +177,19 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 
 static void prediction_fsm_dtor(prediction_t *p)
 {
+	prediction_fsm_output_metric_t *pos, *tmp;
+
 	prediction_fsm_t *p_fsm = prediction_fsm(p);
 	history_fsm_delete(p_fsm->hfsm);
 	if (p_fsm->prob_density_filename)
 		free(p_fsm->prob_density_filename);
+
+	list_for_each_entry_safe(pos, tmp, &p_fsm->output_metrics, list) {
+		list_del(&(pos->list));
+		free(pos->name);
+		free(pos);
+	}
+
 	free(p->user);
 }
 
@@ -199,6 +208,7 @@ prediction_t * prediction_fsm_create(fsm_t *fsm,
 	p_fsm->fsm = fsm;
 	p_fsm->prob_density_filename = NULL;
 	p_fsm->hfsm = history_fsm_create(prediction_length_us, transition_resolution_us);
+	INIT_LIST_HEAD(&p_fsm->output_metrics);
 
 	return prediction_create(prediction_fsm_check,
 				 prediction_fsm_exec,
