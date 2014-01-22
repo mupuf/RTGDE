@@ -36,7 +36,7 @@ typedef struct {
 	/* private declarations */
 	struct list_head predictions;
 	struct list_head models;
-	/* TODO: scoring */
+	scoring_t *scoring;
 	/* TODO: decision */
 	pthread_t thread;
 	uint64_t update_period_us;
@@ -89,6 +89,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	}
 
 	/* feed the output of each models to the scoring */
+	scoring_exec(f_priv->scoring, di);
 
 	/* take a decision */
 
@@ -137,7 +138,7 @@ static void *thread_flowgraph (void *p_data)
 	return NULL;
 }
 
-flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns)
+flowgraph_t *flowgraph_create(const char *name, scoring_t *scoring, uint64_t update_period_ns)
 {
 	flowgraph_priv_t *f = malloc(sizeof(flowgraph_priv_t));
 	if (!f)
@@ -147,6 +148,7 @@ flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns)
 
 	INIT_LIST_HEAD(&f->predictions);
 	INIT_LIST_HEAD(&f->models);
+	f->scoring = scoring;
 	f->update_period_us = update_period_ns;
 	f->base.name = strdup(name);
 

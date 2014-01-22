@@ -15,7 +15,7 @@ typedef struct {
 	const char *name;
 } flowgraph_t;
 
-flowgraph_t *flowgraph_create(const char *name, uint64_t update_period_ns);
+flowgraph_t *flowgraph_create(const char *name, scoring_t *s, uint64_t update_period_ns);
 void flowgraph_teardown(flowgraph_t *f);
 
 int64_t clock_read_us();

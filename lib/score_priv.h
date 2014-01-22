@@ -5,25 +5,28 @@
 #include "prediction.h"
 
 
-typedef int (*score_calc_t)(const prediction_t *p, const graph_t *model_out);
+typedef int (*score_calc_t)(scoring_t *s, const prediction_t *p, const graph_t *model_out);
+typedef void (*score_dtor_t)(scoring_t *s);
 
 typedef struct {
-	score_t base;
+	scoring_t base;
 
 	score_calc_t calc;
+	score_dtor_t dtor;
 
-	void *user;
+	struct list_head metrics;
 } score_priv_t;
 
 typedef struct {
 	score_metric_t base;
 
+	/* private declarations */
+	struct list_head list;
+	char *name;
 	int weight;
-
-	score_priv_t *s_priv;
 } score_metric_priv_t;
 
-score_priv_t *score_priv(score_t *s);
-score_t * score_create(const char *name, const score_calc_t calc, void *user);
+score_priv_t *score_priv(scoring_t *s);
+scoring_t *score_create(score_calc_t calc, score_dtor_t dtor, const char *name, void *user);
 
 #endif // SCORE_PRIV_H
