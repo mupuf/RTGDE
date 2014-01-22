@@ -42,9 +42,11 @@ void prediction_metric_result_delete(prediction_metric_result_t *pmr)
 	free(pmr);
 }
 
-prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr)
+prediction_metric_result_t *
+prediction_metric_result_copy(prediction_metric_result_t *pmr)
 {
-	prediction_metric_result_t *new_pmr = malloc(sizeof(prediction_metric_result_t));
+	prediction_metric_result_t *new_pmr;
+	new_pmr = malloc(sizeof(prediction_metric_result_t));
 	if (!pmr)
 		return NULL;
 
@@ -66,17 +68,22 @@ prediction_list_t *prediction_list_create()
 	INIT_LIST_HEAD(pl);
 	return pl;
 }
-void prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr)
+
+void
+prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr)
 {
 	list_add_tail(&pmr->list, pl);
 }
 
-int prediction_list_append_list_copy(prediction_list_t *po, const prediction_list_t * npl)
+int
+prediction_list_append_list_copy(prediction_list_t *po, const prediction_list_t * npl)
 {
 	prediction_metric_result_t *pmr;
 
 	list_for_each_entry(pmr, npl, list) {
-		prediction_metric_result_t *npmr = prediction_metric_result_copy(pmr);
+		prediction_metric_result_t *npmr;
+
+		npmr = prediction_metric_result_copy(pmr);
 		if (!npmr)
 			return 1;
 		prediction_list_append(po, npmr);
@@ -84,7 +91,8 @@ int prediction_list_append_list_copy(prediction_list_t *po, const prediction_lis
 	return 0;
 }
 
-prediction_metric_result_t * prediction_list_find(prediction_list_t *pl, const char *metric_name)
+prediction_metric_result_t *
+prediction_list_find(prediction_list_t *pl, const char *metric_name)
 {
 	prediction_metric_result_t *pos, *n;
 
@@ -96,7 +104,8 @@ prediction_metric_result_t * prediction_list_find(prediction_list_t *pl, const c
 	return NULL;
 }
 
-prediction_metric_result_t * prediction_list_extract_by_name(prediction_list_t *pl, const char *metric_name)
+prediction_metric_result_t *
+prediction_list_extract_by_name(prediction_list_t *pl, const char *metric_name)
 {
 	prediction_metric_result_t *ret = prediction_list_find(pl, metric_name);
 	if (ret)
@@ -106,7 +115,9 @@ prediction_metric_result_t * prediction_list_extract_by_name(prediction_list_t *
 
 prediction_metric_result_t * prediction_list_extract_head(prediction_list_t *input)
 {
-	prediction_metric_result_t *ret = list_entry(input->next, prediction_metric_result_t, list);
+	prediction_metric_result_t *ret;
+	ret = list_entry(input->next, prediction_metric_result_t, list);
+
 	if (!list_empty(input)) {
 		list_del(&(ret->list));
 		return ret;
@@ -215,7 +226,8 @@ prediction_list_t *prediction_exec(prediction_t *p)
 			continue;
 		}
 
-		fprintf(f, "Time, %s, %s-low prediction, %s-average prediction, %s-high prediction\n",
+		fprintf(f, "Time, %s, %s-low prediction, %s-average prediction, "
+			"%s-high prediction\n",
 			metric_name(pos->base),
 			metric_name(pos->base),
 			metric_name(pos->base),
@@ -227,7 +239,8 @@ prediction_list_t *prediction_exec(prediction_t *p)
 		mh_size = metric_dump_history(pos->base, bh, mh_size);
 
 		for (i = 0; i < mh_size; i++) {
-			fprintf(f, "%" PRIu64 ", %u, 0, 0, 0\n", bh[i].time, bh[i].value);
+			fprintf(f, "%" PRIu64 ", %u, 0, 0, 0\n",
+				bh[i].time, bh[i].value);
 			last_sample_time = bh[i].time;
 		}
 
@@ -297,7 +310,8 @@ int prediction_attach_metric(prediction_t *p, metric_t *m)
 	list_for_each_entry(pos, &p_priv->metrics, list) {
 		if (strcmp(metric_name(pos->base), metric_name(m)) == 0) {
 			fprintf(stderr,
-				"prediction_attach_metric: Metric '%s' is already attached\n",
+				"prediction_attach_metric: "
+				"Metric '%s' is already attached\n",
 				metric_name(m));
 			return 1;
 		}
