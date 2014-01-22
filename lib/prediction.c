@@ -239,7 +239,7 @@ prediction_list_t *prediction_exec(prediction_t *p)
 		const sample_t *s_high = graph_read_first(pred->high);
 
 		while (s_low && s_avg && s_high) {
-			fprintf(f, "%" PRIu64 ", %u, %u, %u\n",
+			fprintf(f, "%" PRIu64 ", 0, %u, %u, %u\n",
 				last_sample_time + s_low->time, s_low->value,
 				s_avg->value, s_high->value);
 
