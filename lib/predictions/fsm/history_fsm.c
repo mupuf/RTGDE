@@ -38,7 +38,7 @@ history_fsm_t *history_fsm_create(sample_time_t prediction_length_us,
 	return h_fsm;
 }
 
-int history_fsm_state_attach_metric(history_fsm_state_t *hf_state, const char *name, double value)
+int history_fsm_state_attach_metric(history_fsm_state_t *hf_state, const char *name, sample_value_t value)
 {
 	history_fsm_state_metric_t *hfs_metric = malloc(sizeof(history_fsm_state_metric_t));
 	if (!hfs_metric)
@@ -70,13 +70,14 @@ static int history_fsm_state_transition_add(history_fsm_t *h_fsm, history_fsm_st
 	return 0;
 }
 
-int history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state)
+history_fsm_state_t *
+history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state)
 {
 	history_fsm_state_t *pos;
 
 	history_fsm_state_t *hf_state = malloc(sizeof(history_fsm_state_t));
 	if (!hf_state)
-		return 1;
+		return NULL;
 
 	INIT_LIST_HEAD(&hf_state->list);
 	INIT_LIST_HEAD(&hf_state->attachedMetrics);
@@ -95,7 +96,7 @@ int history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state)
 		h_fsm->time_state_changed = (sample_time_t)-1;
 	}
 
-	return 0;
+	return hf_state;
 }
 
 int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, sample_time_t time)

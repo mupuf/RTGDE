@@ -11,6 +11,7 @@
 typedef struct {
 	struct list_head list;
 	char *name;
+	sample_value_t value;
 } prediction_fsm_output_metric_t;
 
 typedef struct {
@@ -47,6 +48,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 {
 	prediction_fsm_t *p_fsm = prediction_fsm(p);
 	prediction_priv_t *p_priv = prediction_priv(p);
+	prediction_fsm_output_metric_t *pos_mo;
 	prediction_metric_t *pos_m;
 	int i = 0;
 
@@ -98,10 +100,23 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 						sample.value);
 
 		if (history_fsm_state_changed(p_fsm->hfsm, new_state, sample.time)) {
-			/* add the missing state */
-			history_fsm_state_add(p_fsm->hfsm, new_state);
+			history_fsm_state_t *fsm_state;
 
-			/* TODO: add the values of the output metrics */
+			/* add the missing state */
+			fsm_state = history_fsm_state_add(p_fsm->hfsm, new_state);
+
+			/* add the values of the output metrics */
+			list_for_each_entry(pos_mo, &p_fsm->output_metrics, list) {
+				if (!p_fsm->metric_state(new_state, pos_mo->name, &pos_mo->value)) {
+					fprintf(stderr, "pred_fsm: cannot fetch the the value "
+						"associated with metric '%s' for the state '%s'\n",
+						pos_mo->name, new_state->name);
+				}
+
+				history_fsm_state_attach_metric(fsm_state,
+								pos_mo->name,
+								pos_mo->value);
+			}
 
 			/* check everything is right */
 			int ret = history_fsm_state_changed(p_fsm->hfsm, new_state, sample.time);

@@ -40,8 +40,8 @@ typedef struct {
 
 history_fsm_t *history_fsm_create(sample_time_t prediction_length_us,
 				  sample_time_t transition_resolution_us);
-int history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state);
-int history_fsm_state_attach_metric(history_fsm_state_t *hf_state, const char *name, double value);
+history_fsm_state_t *history_fsm_state_add(history_fsm_t *h_fsm, fsm_state_t *user_fsm_state);
+int history_fsm_state_attach_metric(history_fsm_state_t *hf_state, const char *name, sample_value_t value);
 int history_fsm_state_changed(history_fsm_t *h_fsm, fsm_state_t *dst_fsm_state, sample_time_t time);
 int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm, fsm_state_t *src_fsm_state,
 					 fsm_state_t *dst_fsm_state, FILE *stream);
