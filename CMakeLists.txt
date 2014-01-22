@@ -30,7 +30,7 @@ file(GLOB_RECURSE rtgde_SOURCES "lib/*.c" "lib/*.h"
 
 add_library(rtgde SHARED ${rtgde_SOURCES})
 set_property(TARGET rtgde PROPERTY VERSION 0.1.0)
-target_link_libraries(rtgde ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(rtgde ${CMAKE_THREAD_LIBS_INIT} -lm)
 
 add_executable(test_graph tests/graph.c)
 target_link_libraries(test_graph rtgde)
