@@ -4,8 +4,7 @@
 #include "score.h"
 #include "prediction.h"
 
-
-typedef int (*scoring_calc_t)(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out);
+typedef float (*scoring_calc_t)(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out);
 typedef void (*scoring_dtor_t)(scoring_t *s);
 
 typedef struct {

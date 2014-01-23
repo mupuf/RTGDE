@@ -7,6 +7,7 @@
 #include <predictions/simple.h>
 #include <predictions/average.h>
 #include <models/dummy.h>
+#include <scoring/simple.h>
 
 int64_t relative_time_us()
 {
@@ -35,7 +36,12 @@ int main(int argc, char **argv)
 	assert(!prediction_attach_metric(mp, me2));
 	assert(!prediction_attach_metric(mp, me3));
 
-	flowgraph_t *f = flowgraph_create("nif selector", NULL, 1000000);
+	scoring_t * scoring = score_simple_create();
+	assert(scoring);
+
+	assert(scoring_metric_create(scoring, "throughput", 2));
+
+	flowgraph_t *f = flowgraph_create("nif selector", scoring, 1000000);
 
 	assert(!flowgraph_attach_prediction(f, mp));
 

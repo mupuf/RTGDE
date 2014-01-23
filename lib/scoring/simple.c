@@ -1,13 +1,13 @@
 #include "score.h"
-#include "../score_priv.h"
+#include "../scoring_priv.h"
 
 typedef struct {
 
 } score_simple_t;
 
-int score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out)
+float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out)
 {
-	return 0;
+	return 1.0;
 }
 
 void score_simple_dtor(scoring_t *s)

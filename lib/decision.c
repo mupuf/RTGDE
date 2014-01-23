@@ -63,7 +63,7 @@ decision_input_model_t *decision_input_model_get_first(decision_input_t *di)
 decision_input_model_t *decision_input_model_get_next(decision_input_model_t *dim)
 {
 	struct list_head * next = dim->list.next;
-	if (next == dim->parent->models.next)
+	if (next == &dim->parent->models)
 		return NULL;
 	else
 		return list_entry(dim->list.next, decision_input_model_t, list);

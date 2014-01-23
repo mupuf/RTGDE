@@ -1,4 +1,4 @@
-#include "score_priv.h"
+#include "scoring_priv.h"
 #include <string.h>
 
 static scoring_metric_priv_t *score_metric_priv(scoring_metric_t *m)
@@ -89,20 +89,27 @@ void scoring_metric_delete(scoring_metric_t *metric)
 int scoring_exec(scoring_t *s, decision_input_t *di)
 {
 	scoring_priv_t *s_priv = score_priv(s);
-	decision_input_model_t *model;
+	decision_input_model_t *dim;
 	scoring_metric_priv_t *pos;
+	decision_input_metric_t* m;
 
 	/* for all models of dim */
-	model = decision_input_model_get_first(di);
-	while (model) {
+	dim = decision_input_model_get_first(di);
+	while (dim) {
 		/* for all metrics registered */
 		list_for_each_entry(pos, &s_priv->metrics, list) {
-				/* fetch the corresponding entry from the decision input */
-				/* call the calc function */
-				/* score += metric_score * metric_weight */
+			/* fetch the corresponding entry from the decision input */
+			m = decision_input_metric_from_name(dim, pos->name);
+
+			/* call the calc function */
+			/* score += metric_score * metric_weight */
+			m->score = s_priv->calc(s, m->prediction, m->output) * pos->weight;
+
+			/* model_score += metric_score */
+			dim->score += m->score;
 		}
-		model = decision_input_model_get_next(model);
+		dim = decision_input_model_get_next(dim);
 	}
 
-	return 1; /* score */
+	return 0;
 }
