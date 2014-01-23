@@ -5,7 +5,7 @@ typedef struct {
 
 } score_simple_t;
 
-int score_simple_calc(scoring_t *s, const prediction_t *p, const graph_t *model_out)
+int score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out)
 {
 	return 0;
 }
@@ -21,7 +21,7 @@ scoring_t * score_simple_create()
 	if (!simple)
 		return NULL;
 
-	return score_create(score_simple_calc, score_simple_dtor,
+	return scoring_create(score_simple_calc, score_simple_dtor,
 			    "score_simple", (void *)simple);
 }
 

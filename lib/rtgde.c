@@ -89,7 +89,8 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	}
 
 	/* feed the output of each models to the scoring */
-	scoring_exec(f_priv->scoring, di);
+	if (f_priv->scoring)
+		scoring_exec(f_priv->scoring, di);
 
 	/* take a decision */
 
