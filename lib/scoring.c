@@ -6,7 +6,7 @@ static scoring_metric_priv_t *score_metric_priv(scoring_metric_t *m)
 	return (scoring_metric_priv_t *)m;
 }
 
-scoring_priv_t *score_priv(scoring_t *s)
+scoring_priv_t *scoring_priv(scoring_t *s)
 {
 	return (scoring_priv_t *)s;
 }
@@ -28,7 +28,7 @@ scoring_t *scoring_create(scoring_calc_t calc, scoring_dtor_t dtor, const char *
 
 void score_delete(scoring_t *s)
 {
-	scoring_priv_t *s_priv = score_priv(s);
+	scoring_priv_t *s_priv = scoring_priv(s);
 	if (s_priv->dtor)
 		s_priv->dtor(s);
 	free((char *)s_priv->name);
@@ -37,7 +37,7 @@ void score_delete(scoring_t *s)
 
 scoring_metric_t * scoring_metric_create(scoring_t *s, const char *name, int weight)
 {
-	scoring_priv_t *s_priv = score_priv(s);
+	scoring_priv_t *s_priv = scoring_priv(s);
 	scoring_metric_priv_t *sm_priv;
 
 	if (scoring_metric_by_name(s, name)) {
@@ -62,7 +62,7 @@ scoring_metric_t * scoring_metric_create(scoring_t *s, const char *name, int wei
 
 scoring_metric_t *scoring_metric_by_name(scoring_t *s, const char *name)
 {
-	scoring_priv_t *s_priv = score_priv(s);
+	scoring_priv_t *s_priv = scoring_priv(s);
 	scoring_metric_priv_t *pos;
 
 	list_for_each_entry(pos, &s_priv->metrics, list) {
@@ -88,17 +88,17 @@ void scoring_metric_delete(scoring_metric_t *metric)
 
 const char *scoring_name(scoring_t *s)
 {
-	return score_priv(s)->name;
+	return scoring_priv(s)->name;
 }
 
 void *scoring_user(scoring_t *s)
 {
-	return score_priv(s)->user;
+	return scoring_priv(s)->user;
 }
 
 int scoring_exec(scoring_t *s, decision_input_t *di)
 {
-	scoring_priv_t *s_priv = score_priv(s);
+	scoring_priv_t *s_priv = scoring_priv(s);
 	decision_input_model_t *dim;
 	scoring_metric_priv_t *pos;
 	decision_input_metric_t* m;
