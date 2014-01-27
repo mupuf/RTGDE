@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 
+/* decision input : Move that to a different file? */
 typedef uint32_t score_t;
 
 typedef struct {
@@ -29,7 +30,6 @@ typedef struct {
 	score_t score;
 } decision_input_model_t;
 
-
 decision_input_t * decision_input_create();
 decision_input_model_t * decision_input_model_create();
 decision_input_metric_t * decision_input_metric_create(prediction_metric_result_t *prediction,
@@ -43,6 +43,17 @@ decision_input_metric_t *decision_input_metric_from_name(decision_input_model_t 
 							 const char *name);
 void decision_input_model_delete(decision_input_model_t *dim);
 void decision_input_delete(decision_input_t *di);
+
+/* decision */
+typedef struct {
+	const char *name;
+	void *user;
+} decision_t;
+
+const char *decision_name(decision_t *d);
+void decision_exec(decision_t *d, decision_input_t *di);
+void decision_delete(decision_t *d);
+
 
 #ifdef __cplusplus
 }
