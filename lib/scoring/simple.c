@@ -45,12 +45,12 @@ float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, con
 
 		if (m->value >= h->value)
 			score_seg = 1.0;
+		else if (m->value >= a->value)
+			score_seg = 0.5 + (((float)(m->value - a->value)) / (h->value - a->value))/2.0;
 		else if (m->value <= l->value)
 			score_seg = 0.0;
-		else if (m->value >= a->value)
-			score_seg = ((float)(m->value - a->value)) / (h->value - a->value);
 		else if (m->value < a->value)
-			score_seg = ((float)(m->value - l->value)) / (a->value - l->value);
+			score_seg = (((float)(m->value - l->value)) / (a->value - l->value))/2.0;
 
 		fprintf(stderr, "p (%i, %i, %i) m (%i): score_seg = %f\n",
 			h->value, a->value, l->value, m->value, score_seg);
@@ -76,6 +76,7 @@ float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, con
 	/* normalize the score */
 	score /= (last_update - start_time);
 	assert(score <= 1.0);
+	fprintf(stderr, "=> score = %f\n", score);
 
 	return score;
 }
