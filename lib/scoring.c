@@ -20,8 +20,8 @@ scoring_t *scoring_create(scoring_calc_t calc, scoring_dtor_t dtor, const char *
 	INIT_LIST_HEAD(&s_priv->metrics);
 	s_priv->calc = calc;
 	s_priv->dtor = dtor;
-	s_priv->base.name = strdup(name);
-	s_priv->base.user = user;
+	s_priv->name = strdup(name);
+	s_priv->user = user;
 
 	return (scoring_t *)s_priv;
 }
@@ -31,7 +31,7 @@ void score_delete(scoring_t *s)
 	scoring_priv_t *s_priv = score_priv(s);
 	if (s_priv->dtor)
 		s_priv->dtor(s);
-	free((char *)s->name);
+	free((char *)s_priv->name);
 	free(s);
 }
 
@@ -84,6 +84,16 @@ void scoring_metric_delete(scoring_metric_t *metric)
 	list_del(&(sm_priv->list));
 	free(sm_priv->name);
 	free(sm_priv);
+}
+
+const char *scoring_name(scoring_t *s)
+{
+	return score_priv(s)->name;
+}
+
+void *scoring_user(scoring_t *s)
+{
+	return score_priv(s)->user;
 }
 
 int scoring_exec(scoring_t *s, decision_input_t *di)

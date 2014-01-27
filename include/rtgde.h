@@ -8,7 +8,7 @@ extern "C" {
 #include "metric.h"
 #include "prediction.h"
 #include "model.h"
-#include "score.h"
+#include "scoring.h"
 #include "decision.h"
 
 typedef struct {

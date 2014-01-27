@@ -1,7 +1,7 @@
 #ifndef SCORE_SIMPLE_H
 #define SCORE_SIMPLE_H
 
-#include "../score.h"
+#include "../scoring.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,4 +1,4 @@
-#include "score.h"
+#include "scoring.h"
 #include "../scoring_priv.h"
 #include "scoring/simple.h"
 #include <assert.h>
@@ -13,7 +13,7 @@ typedef struct {
 
 float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out)
 {
-	score_simple_t *simple = (score_simple_t*) s->user;
+	score_simple_t *simple = (score_simple_t*) scoring_user(s);
 	const sample_t *h, *nh, *a, *na, *l, *nl, *m, *nm;
 	sample_time_t last_update = 0, start_time;
 	double score = 0.0, score_seg = 0.0;
@@ -83,7 +83,7 @@ float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, con
 
 void score_simple_dtor(scoring_t *s)
 {
-	free(s->user);
+	free(scoring_user(s));
 }
 
 scoring_t * score_simple_create(score_simple_style_t inverted)
