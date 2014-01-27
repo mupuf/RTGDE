@@ -148,7 +148,7 @@ void graph_print_coordinates(const graph_t *g)
 
 	graph_point_priv_t *pos;
 	list_for_each_entry(pos, &g_priv->point_lst, list)
-		printf("[%"PRIu64", %u\n", pos->base.time, pos->base.value);
+		printf("[%"PRIu64", %i\n", pos->base.time, pos->base.value);
 	printf("\n");
 }
 

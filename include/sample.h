@@ -8,7 +8,7 @@ extern "C" {
 #include <stdint.h>
 
 typedef uint64_t sample_time_t;
-typedef uint32_t sample_value_t;
+typedef int32_t sample_value_t;
 
 typedef struct {
 	/* public declarations */

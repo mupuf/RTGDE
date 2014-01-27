@@ -1,10 +1,11 @@
 #include <rtgde.h>
 #include <assert.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 void print_point(const sample_t *p)
 {
-	printf("[%llu, %u]", (unsigned long long)p->time, p->value);
+	printf("[%" PRIu64 ", %i]", p->time, p->value);
 }
 
 int main(int argc, char **argv)

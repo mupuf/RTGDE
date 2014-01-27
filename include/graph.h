@@ -12,7 +12,7 @@ extern "C" {
 
 #define GRAPH_MAX_POINT_COUNT USHRT_MAX
 
-typedef uint64_t graph_integral_t;
+typedef int64_t graph_integral_t;
 typedef uint16_t graph_index_t;
 
 typedef struct {

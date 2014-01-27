@@ -52,7 +52,7 @@ float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, con
 		else if (m->value < a->value)
 			score_seg = ((float)(m->value - l->value)) / (a->value - l->value);
 
-		fprintf(stderr, "p (%u, %u, %u) m (%u): score_seg = %f\n",
+		fprintf(stderr, "p (%i, %i, %i) m (%i): score_seg = %f\n",
 			h->value, a->value, l->value, m->value, score_seg);
 
 		if (simple->inverted)

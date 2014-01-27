@@ -55,7 +55,7 @@ void metric_print_history(metric_t *m)
 	get = m_priv->get;
 
 	while (get != m_priv->put) {
-		printf("[%llu, %u] ", (unsigned long long)m_priv->ring[get].time,
+		printf("[%llu, %i] ", (unsigned long long)m_priv->ring[get].time,
 				      m_priv->ring[get].value);
 
 		get = rb_next_index(get, m_priv->history_size);
@@ -81,7 +81,7 @@ void metric_update(metric_t *m, sample_time_t timestamp, sample_value_t value)
 
 	/* CSV output */
 	if (m_priv->csv_output)
-		fprintf(m_priv->csv_output, "%" PRIu64 ", %u\n", timestamp, value);
+		fprintf(m_priv->csv_output, "%" PRIu64 ", %i\n", timestamp, value);
 
 	pthread_mutex_unlock(&m_priv->history_mutex);
 }

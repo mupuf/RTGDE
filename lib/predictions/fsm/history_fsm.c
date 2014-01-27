@@ -190,7 +190,7 @@ int history_fsm_state_trans_prob_density(history_fsm_t *h_fsm,
 
 	/* loop pour afficher les valeurs ! */
 	for (i = 0; i < history_fsm_entry_count(h_fsm); i++)
-		fprintf(stream, "%"PRIu64", %u\n",
+		fprintf(stream, "%"PRIu64", %i\n",
 			history_fsm_entry_to_time(h_fsm, i),
 			trans->cnt[i]);
 	return 0;
