@@ -17,7 +17,7 @@ decision_input_model_t * model_dummy_exec(model_t *m, prediction_list_t *input)
 	decision_input_metric_t *di_metric;
 	decision_input_model_t *dim;
 
-	dim = decision_input_model_create();
+	dim = decision_input_model_create(m);
 	if (!dim)
 		 return NULL;
 

@@ -13,7 +13,7 @@ decision_input_t *decision_input_create()
 	return di;
 }
 
-decision_input_model_t *decision_input_model_create()
+decision_input_model_t *decision_input_model_create(model_t *model)
 {
 	decision_input_model_t *dim = malloc(sizeof(decision_input_model_t));
 	if (!dim)
@@ -22,6 +22,7 @@ decision_input_model_t *decision_input_model_create()
 	INIT_LIST_HEAD(&dim->predictions);
 	INIT_LIST_HEAD(&dim->list);
 	dim->parent = NULL;
+	dim->model = model;
 	dim->score = 0;
 
 	return dim;
@@ -141,14 +142,17 @@ decision_priv_t *decision_priv(decision_t *s)
 	return (decision_priv_t *)s;
 }
 
-decision_t *decision_create(decision_calc_t calc, decision_dtor_t dtor,
-			  const char *name, void *user)
+decision_t *decision_create(decision_exec_t exec, decision_dtor_t dtor,
+			    decision_callback_t user_cb, void *user_cb_data,
+			    const char *name, void *user)
 {
 	decision_priv_t *d_priv = malloc(sizeof(decision_priv_t));
 	if (!d_priv)
 		return NULL;
 
-	d_priv->calc = calc;
+	d_priv->user_cb = user_cb;
+	d_priv->user_cb_data = user_cb_data;
+	d_priv->exec = exec;
 	d_priv->dtor = dtor;
 	d_priv->name = strdup(name);
 	d_priv->user = user;
@@ -169,8 +173,13 @@ void *decision_user(decision_t *d)
 void decision_exec(decision_t *d, decision_input_t *di)
 {
 	decision_priv_t *d_priv = decision_priv(d);
-	if (d_priv->calc)
-		d_priv->calc(d, di);
+	if (d_priv->exec)
+		d_priv->exec(d, di);
+}
+
+void decision_call_user_cb(decision_t *d, model_t *m)
+{
+	decision_priv(d)->user_cb(d, m);
 }
 
 void decision_delete(decision_t *d)
