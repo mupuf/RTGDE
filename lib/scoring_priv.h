@@ -28,7 +28,6 @@ typedef struct {
 	int weight;
 } scoring_metric_priv_t;
 
-scoring_priv_t *score_priv(scoring_t *s);
 scoring_t *scoring_create(scoring_calc_t calc, scoring_dtor_t dtor,
 			  const char *name, void *user);
 void *scoring_user(scoring_t *s);
