@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 
 	decision_delete(data.decision);
 
-	/* scoring delete */
+	scoring_delete(data.scoring);
 
 	prediction_delete(data.mp);
 

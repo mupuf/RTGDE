@@ -16,6 +16,7 @@ typedef struct {
 } scoring_t;
 
 scoring_metric_t * scoring_metric_create(scoring_t *s, const char *name, int weight);
+void scoring_delete(scoring_t *s);
 scoring_metric_t * scoring_metric_by_name(scoring_t *s, const char *name);
 int scoring_metric_weight(scoring_metric_t *metric);
 void scoring_metric_delete(scoring_metric_t *metric);

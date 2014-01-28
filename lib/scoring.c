@@ -26,11 +26,16 @@ scoring_t *scoring_create(scoring_calc_t calc, scoring_dtor_t dtor, const char *
 	return (scoring_t *)s_priv;
 }
 
-void score_delete(scoring_t *s)
+void scoring_delete(scoring_t *s)
 {
 	scoring_priv_t *s_priv = scoring_priv(s);
+	scoring_metric_priv_t *pos, *n;
 	if (s_priv->dtor)
 		s_priv->dtor(s);
+
+	list_for_each_entry_safe(pos, n, &s_priv->metrics, list)
+		scoring_metric_delete((scoring_metric_t*)pos);
+
 	free((char *)s_priv->name);
 	free(s);
 }

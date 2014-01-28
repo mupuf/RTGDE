@@ -43,6 +43,7 @@ void decision_exec(decision_t *d, decision_input_t *di)
 
 void decision_call_user_cb(decision_t *d, model_t *m)
 {
+	/* TODO: run in another thread! */
 	decision_priv(d)->user_cb(d, m);
 }
 
