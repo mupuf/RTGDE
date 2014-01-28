@@ -66,7 +66,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	flowgraph_model_t *pos_m;
 	decision_input_model_t *dim;
 	decision_input_t *di = decision_input_create();
-	model_t *model = NULL;
+	decision_input_model_t *dim_sel = NULL;
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
@@ -99,11 +99,11 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 	/* take a decision */
 	if (f_priv->decision)
-		model = decision_exec(f_priv->decision, di);
+		dim_sel = decision_exec(f_priv->decision, di);
 
 	/* call back the user (TODO: Put that in a thread ?)*/
 	if (f_priv->user_cb)
-		f_priv->user_cb((flowgraph_t*)f_priv, di, model);
+		f_priv->user_cb((flowgraph_t*)f_priv, di, dim_sel, f_priv->user_cb_data);
 
 	/* free all the ressources */
 	decision_input_delete(di);

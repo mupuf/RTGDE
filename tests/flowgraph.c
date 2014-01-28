@@ -18,7 +18,7 @@ int64_t relative_time_us()
 	return clock_read_us() - boot_time;
 }
 
-struct {
+struct flowgraph_data {
 	prediction_t * mp;
 	metric_t * me1;
 	metric_t * me2;
@@ -29,9 +29,13 @@ struct {
 	flowgraph_t *f;
 } data;
 
-void decision_callback(flowgraph_t *f, decision_input_t *di, model_t *m)
+void decision_callback(flowgraph_t *f, decision_input_t *di,
+		       decision_input_model_t *dim, void *user)
 {
-	fprintf(stderr, "Callback decision from model '%p'\n", m);
+	struct flowgraph_data *d = (struct flowgraph_data*) user;
+	assert(dim->model == d->m);
+	fprintf(stderr, "Callback decision from model '%p' with score %u\n",
+		dim->model, dim->score);
 }
 
 int main(int argc, char **argv)

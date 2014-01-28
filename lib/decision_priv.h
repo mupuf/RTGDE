@@ -3,7 +3,7 @@
 
 #include "decision.h"
 
-typedef model_t *(*decision_exec_t)(decision_t *d, decision_input_t *di);
+typedef decision_input_model_t *(*decision_exec_t)(decision_t *d, decision_input_t *di);
 typedef void (*decision_dtor_t)(decision_t *d);
 
 typedef struct {

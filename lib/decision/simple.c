@@ -7,7 +7,7 @@ typedef struct {
 
 } decision_simple_t;
 
-model_t *decision_simple_calc(decision_t *d, decision_input_t *di)
+decision_input_model_t *decision_simple_calc(decision_t *d, decision_input_t *di)
 {
 	decision_input_model_t *dim, *best = NULL;
 	score_t best_score = 0;
@@ -22,7 +22,7 @@ model_t *decision_simple_calc(decision_t *d, decision_input_t *di)
 		dim = decision_input_model_get_next(dim);
 	}
 
-	return best->model;
+	return best;
 }
 
 void decision_simple_dtor(decision_t *d)

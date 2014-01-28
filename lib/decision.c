@@ -31,7 +31,7 @@ void *decision_user(decision_t *d)
 	return decision_priv(d)->user;
 }
 
-model_t *decision_exec(decision_t *d, decision_input_t *di)
+decision_input_model_t *decision_exec(decision_t *d, decision_input_t *di)
 {
 	decision_priv_t *d_priv = decision_priv(d);
 	if (d_priv->exec)

@@ -15,7 +15,8 @@ typedef struct {
 
 } flowgraph_t;
 
-typedef void (*flowgraph_callback_t)(flowgraph_t *f, decision_input_t *di, model_t *m);
+typedef void (*flowgraph_callback_t)(flowgraph_t *f, decision_input_t *di,
+				     decision_input_model_t *dim, void *user);
 
 int64_t clock_read_us();
 
