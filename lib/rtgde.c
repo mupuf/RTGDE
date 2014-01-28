@@ -40,6 +40,9 @@ typedef struct {
 	decision_t *decision;
 	pthread_t thread;
 	uint64_t update_period_us;
+
+	flowgraph_callback_t user_cb;
+	void *user_cb_data;
 } flowgraph_priv_t;
 
 flowgraph_priv_t *flowgraph_priv(const flowgraph_t *f)
@@ -62,6 +65,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	flowgraph_model_t *pos_m;
 	decision_input_model_t *dim;
 	decision_input_t *di = decision_input_create();
+	model_t *model = NULL;
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
@@ -94,7 +98,12 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 	/* take a decision */
 	if (f_priv->decision)
-		decision_exec(f_priv->decision, di);
+		model = decision_exec(f_priv->decision, di);
+
+	/* call back the user */
+	if (f_priv->user_cb)
+		f_priv->user_cb((flowgraph_t*)f_priv, di, model);
+
 
 	/* free all the ressources */
 	decision_input_delete(di);
@@ -141,23 +150,26 @@ static void *thread_flowgraph (void *p_data)
 	return NULL;
 }
 
-flowgraph_t *flowgraph_create(const char *name, scoring_t *scoring,
-			      decision_t *decision, uint64_t update_period_ns)
+flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
+			      flowgraph_callback_t user_cb, void *user_cb_data,
+			      uint64_t update_period_ns)
 {
-	flowgraph_priv_t *f = malloc(sizeof(flowgraph_priv_t));
-	if (!f)
+	flowgraph_priv_t *f_priv = malloc(sizeof(flowgraph_priv_t));
+	if (!f_priv)
 		return NULL;
 
-	pthread_mutex_init(&f->config_mutex, NULL);
+	pthread_mutex_init(&f_priv->config_mutex, NULL);
 
-	INIT_LIST_HEAD(&f->predictions);
-	INIT_LIST_HEAD(&f->models);
-	f->scoring = scoring;
-	f->decision = decision;
-	f->update_period_us = update_period_ns;
-	f->base.name = strdup(name);
+	INIT_LIST_HEAD(&f_priv->predictions);
+	INIT_LIST_HEAD(&f_priv->models);
+	f_priv->scoring = s;
+	f_priv->decision = d;
+	f_priv->update_period_us = update_period_ns;
+	f_priv->user_cb = user_cb;
+	f_priv->user_cb_data = user_cb_data;
+	f_priv->base.name = strdup(name);
 
-	return (flowgraph_t *)f;
+	return (flowgraph_t *)f_priv;
 }
 
 int flowgraph_attach_prediction(flowgraph_t *f, prediction_t * p)

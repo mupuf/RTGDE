@@ -29,7 +29,7 @@ struct {
 	flowgraph_t *f;
 } data;
 
-void decision_callback(decision_t *d, model_t *m)
+void decision_callback(flowgraph_t *f, decision_input_t *di, model_t *m)
 {
 	fprintf(stderr, "Callback decision from model '%p'\n", m);
 }
@@ -60,7 +60,8 @@ int main(int argc, char **argv)
 	data.decision = decision_simple_create(decision_callback, &data);
 	assert(data.decision);
 
-	data.f = flowgraph_create("nif selector", data.scoring, data.decision, 1000000);
+	data.f = flowgraph_create("nif selector", data.scoring, data.decision,
+				  decision_callback, &data, 1000000);
 
 	assert(!flowgraph_attach_prediction(data.f, data.mp));
 
