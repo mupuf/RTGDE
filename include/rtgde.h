@@ -33,7 +33,7 @@ int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p);
 int flowgraph_attach_model(flowgraph_t *f, model_t * m);
 int flowgraph_detach_model(flowgraph_t *f, model_t * m);
 
-int rtgde_start(flowgraph_t *f);
+int rtgde_start(flowgraph_t *f, int one_time);
 int rtgde_stop(flowgraph_t *f);
 
 #ifdef __cplusplus

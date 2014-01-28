@@ -63,9 +63,8 @@ void do_work(int argc, char *argv[], flowgraph_t *f, metric_t * me)
 			die("Cannot open the input file");
 	}
 
-	rtgde_start(f);
 	read_file(me, finput);
-	sleep(1);
+	rtgde_start(f, 1);
 	flowgraph_teardown(f);
 }
 

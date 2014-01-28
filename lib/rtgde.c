@@ -41,6 +41,7 @@ typedef struct {
 	decision_t *decision;
 	pthread_t thread;
 	uint64_t update_period_us;
+	int one_time;
 
 	flowgraph_callback_t user_cb;
 	void *user_cb_data;
@@ -138,6 +139,10 @@ static void *thread_flowgraph (void *p_data)
 		s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 		if (s != 0)
 			die(s, "pthread_setcancelstate");
+
+		/* schedule the next work, if we weren't run as one_time */
+		if (f_priv->one_time)
+			return NULL;
 
 		int64_t s = next_wakeup - clock_read_us();
 		if (s > 0)
@@ -269,10 +274,16 @@ exit:
 	return ret;
 }
 
-int rtgde_start(flowgraph_t *f)
+int rtgde_start(flowgraph_t *f, int one_time)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+	f_priv->one_time = one_time;
 	int s = pthread_create(&f_priv->thread, NULL, &thread_flowgraph, f);
+
+	if (s != 0 && one_time) {
+		s = pthread_join(f_priv->thread, NULL);
+
+	}
 
 	return s;
 }

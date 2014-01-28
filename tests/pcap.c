@@ -227,7 +227,7 @@ int main(int argc, char *argv[])
 
 	prediction_output_csv(mp, "pred_simple_%s_%i.csv");
 
-	rtgde_start(f);
+	rtgde_start(f, 0);
 
 	do_work(argc, argv, me, 10000000);
 

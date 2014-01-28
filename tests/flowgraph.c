@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
 	prediction_output_csv(data.mp, "pred_average_%s_%i.csv");
 
-	rtgde_start(data.f);
+	rtgde_start(data.f, 0);
 
 	for (i = 0; i < 10; i++) {
 		metric_update(data.me1, relative_time_us(), i);
