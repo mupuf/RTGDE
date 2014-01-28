@@ -12,17 +12,19 @@ extern "C" {
 #include "decision.h"
 
 typedef struct {
-	const char *name;
+
 } flowgraph_t;
 
 typedef void (*flowgraph_callback_t)(flowgraph_t *f, decision_input_t *di, model_t *m);
+
+int64_t clock_read_us();
 
 flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 			      flowgraph_callback_t user_cb, void *user_cb_data,
 			      uint64_t update_period_ns);
 void flowgraph_teardown(flowgraph_t *f);
 
-int64_t clock_read_us();
+const char * flowgraph_name(flowgraph_t *f);
 
 int flowgraph_attach_prediction(flowgraph_t *f, prediction_t * p);
 int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p);

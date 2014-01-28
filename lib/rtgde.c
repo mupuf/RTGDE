@@ -34,6 +34,7 @@ typedef struct {
 	pthread_mutex_t config_mutex;
 
 	/* private declarations */
+	char *name;
 	struct list_head predictions;
 	struct list_head models;
 	scoring_t *scoring;
@@ -100,10 +101,9 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	if (f_priv->decision)
 		model = decision_exec(f_priv->decision, di);
 
-	/* call back the user */
+	/* call back the user (TODO: Put that in a thread ?)*/
 	if (f_priv->user_cb)
 		f_priv->user_cb((flowgraph_t*)f_priv, di, model);
-
 
 	/* free all the ressources */
 	decision_input_delete(di);
@@ -167,9 +167,14 @@ flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 	f_priv->update_period_us = update_period_ns;
 	f_priv->user_cb = user_cb;
 	f_priv->user_cb_data = user_cb_data;
-	f_priv->base.name = strdup(name);
+	f_priv->name = strdup(name);
 
 	return (flowgraph_t *)f_priv;
+}
+
+const char *flowgraph_name(flowgraph_t *f)
+{
+	return flowgraph_priv(f)->name;
 }
 
 int flowgraph_attach_prediction(flowgraph_t *f, prediction_t * p)
@@ -297,7 +302,7 @@ void flowgraph_teardown(flowgraph_t *f)
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
-	free((char *)f->name);
+	free(f_priv->name);
 
 	/* free the prediction list */
 	list_for_each_entry_safe(pos_p, n_p, &f_priv->predictions, list) {
