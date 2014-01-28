@@ -1,0 +1,7 @@
+*.csv
+*.png
+*.m
+*.plot
+*~
+build/
+CMakeLists.txt.*
