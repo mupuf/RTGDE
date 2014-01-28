@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 	assert(me);
 
 	assert(!prediction_attach_metric(mp, me));
-	flowgraph_t *f = flowgraph_create("nif selector", NULL, 1000000);
+	flowgraph_t *f = flowgraph_create("nif selector", NULL, NULL, 1000000);
 	assert(!flowgraph_attach_prediction(f, mp));
 
 	model_t * m = model_dummy_create();
