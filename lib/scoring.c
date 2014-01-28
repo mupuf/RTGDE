@@ -111,6 +111,7 @@ int scoring_exec(scoring_t *s, decision_input_t *di)
 	/* for all models of dim */
 	dim = decision_input_model_get_first(di);
 	while (dim) {
+		int weights = 0;
 		/* for all metrics registered */
 		list_for_each_entry(pos, &s_priv->metrics, list) {
 			/* fetch the corresponding entry from the decision input */
@@ -122,7 +123,10 @@ int scoring_exec(scoring_t *s, decision_input_t *di)
 
 			/* model_score += metric_score */
 			dim->score += m->score;
+
+			weights += pos->weight;
 		}
+		dim->score /= weights;
 		dim = decision_input_model_get_next(dim);
 	}
 

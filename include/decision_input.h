@@ -9,8 +9,7 @@ extern "C" {
 #endif
 
 /* decision input : Move that to a different file? */
-typedef uint32_t score_t;
-#define SCORE_MAX ((score_t) -1)
+typedef float score_t;
 
 typedef struct {
 	struct list_head list;

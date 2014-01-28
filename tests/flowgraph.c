@@ -34,7 +34,7 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 {
 	struct flowgraph_data *d = (struct flowgraph_data*) user;
 	assert(dim->model == d->m);
-	fprintf(stderr, "Callback decision from model '%p' with score %u\n",
+	fprintf(stderr, "Callback decision from model '%p' with score %f\n",
 		dim->model, dim->score);
 }
 
