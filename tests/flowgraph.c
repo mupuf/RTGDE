@@ -33,6 +33,11 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 		       decision_input_model_t *dim, void *user)
 {
 	struct flowgraph_data *d = (struct flowgraph_data*) user;
+	if (!dim) {
+		fprintf(stderr, "Callback decision: no decision has been made!\n");
+		return;
+	}
+
 	assert(dim->model == d->m);
 	fprintf(stderr, "Callback decision from model '%p' with score %f\n",
 		dim->model, dim->score);

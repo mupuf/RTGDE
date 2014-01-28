@@ -116,6 +116,8 @@ int scoring_exec(scoring_t *s, decision_input_t *di)
 		list_for_each_entry(pos, &s_priv->metrics, list) {
 			/* fetch the corresponding entry from the decision input */
 			m = decision_input_metric_from_name(dim, pos->name);
+			if (!m)
+				continue;
 
 			/* call the calc function */
 			/* score += metric_score * metric_weight */
