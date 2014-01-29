@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
 	assert(!flowgraph_attach_model(f, m));
 
-	prediction_output_csv(mp, "pred_simple_%s_%i.csv");
+	flowgraph_output_csv(f, "pred_simple_%s_%i.csv");
 
 	rtgde_start(f, 0);
 

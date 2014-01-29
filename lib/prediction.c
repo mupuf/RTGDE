@@ -177,8 +177,6 @@ prediction_t * prediction_create(prediction_check_t check,
 	p_priv->exec = exec;
 	p_priv->dtor = dtor;
 	p_priv->base.user = user;
-	p_priv->csv_filename_format = NULL;
-	p_priv->prediction_count = 0;
 
 	return (prediction_t *)p_priv;
 }
@@ -192,86 +190,14 @@ const char *prediction_name(prediction_t* p)
 prediction_list_t *prediction_exec(prediction_t *p)
 {
 	prediction_priv_t *p_priv = prediction_priv(p);
-	prediction_metric_t *pos;
 
 	int ret = p_priv->check(p);
 	if (ret)
 		return NULL;
 
-	p_priv->prediction_count++;
-
 	prediction_list_t *pl = p_priv->exec(p);
 	if (!pl)
 		return NULL;
-
-	if (!p_priv->csv_filename_format)
-		return pl;
-
-	/* list all metrics */
-	list_for_each_entry(pos, &p_priv->metrics, list) {
-		prediction_metric_result_t *pred;
-		sample_time_t last_sample_time = 0;
-		char filename[PATH_MAX];
-		history_size_t mh_size;
-		sample_t *bh;
-		int i;
-
-		snprintf(filename, sizeof(filename), p_priv->csv_filename_format,
-			 metric_name(pos->base), p_priv->prediction_count);
-
-		pred = prediction_list_find(pl, metric_name(pos->base));
-		if (!pred) {
-			fprintf(stderr,
-				"Error, can't find '%s' in the prediction list\n",
-				metric_name(pos->base));
-			continue;
-
-		}
-
-		printf("filename = '%s'\n", filename);
-		FILE *f = fopen(filename, "w");
-		if (!f) {
-			perror("prediction csv output, fopen");
-			continue;
-		}
-
-		fprintf(f, "Time, %s, %s-low prediction, %s-average prediction, "
-			"%s-high prediction\n",
-			metric_name(pos->base),
-			metric_name(pos->base),
-			metric_name(pos->base),
-			metric_name(pos->base));
-
-		/* dump the metrics */
-		mh_size = metric_history_size(pos->base);
-		bh = (sample_t *) malloc(mh_size * sizeof(sample_t));
-		mh_size = metric_dump_history(pos->base, bh, mh_size);
-
-		for (i = 0; i < mh_size; i++) {
-			fprintf(f, "%" PRIu64 ", %i, , ,\n",
-				bh[i].time, bh[i].value);
-			last_sample_time = bh[i].time;
-		}
-
-		free(bh);
-
-		/* dump the predicted values */
-		const sample_t *s_low = graph_read_first(pred->low);
-		const sample_t *s_avg = graph_read_first(pred->average);
-		const sample_t *s_high = graph_read_first(pred->high);
-
-		while (s_low && s_avg && s_high) {
-			fprintf(f, "%" PRIu64 ", , %i, %i, %i\n",
-				last_sample_time + s_low->time, s_low->value,
-				s_avg->value, s_high->value);
-
-			s_low = graph_read_next(pred->low, s_low);
-			s_avg = graph_read_next(pred->average, s_avg);
-			s_high = graph_read_next(pred->high, s_high);
-		}
-
-		fclose(f);
-	}
 
 	return pl;
 }
@@ -290,24 +216,11 @@ void prediction_delete(prediction_t *p)
 		free(pos);
 	}
 
-	if (p_priv->csv_filename_format)
-		free(p_priv->csv_filename_format);
-
-	/* POISON: detect use after free or double-delete */
-	p_priv->csv_filename_format = (char *)42;
-
 	free(p_priv->name);
 	free(p);
-}
 
-void prediction_output_csv(prediction_t *p, const char *csv_filename_format)
-{
-	prediction_priv_t *p_priv = prediction_priv(p);
-
-	if (p_priv->csv_filename_format)
-		free(p_priv->csv_filename_format);
-
-	p_priv->csv_filename_format = strdup(csv_filename_format);
+	/* POISON: detect use after free or double-delete */
+	p_priv->name = (char *)42;
 }
 
 int prediction_attach_metric(prediction_t *p, metric_t *m)
