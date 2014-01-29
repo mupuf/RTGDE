@@ -14,6 +14,8 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name)
 
 	INIT_LIST_HEAD(&pmr->list);
 	pmr->name = strdup(name);
+	pmr->hsize = 0;
+	pmr->history = NULL;
 	pmr->high = graph_create();
 	pmr->average = graph_create();
 	pmr->low = graph_create();
@@ -33,6 +35,8 @@ void prediction_metric_result_delete(prediction_metric_result_t *pmr)
 	}
 
 	free((char *)pmr->name);
+	if (pmr->history)
+		free(pmr->history);
 	graph_delete((graph_t *)pmr->high);
 	graph_delete((graph_t *)pmr->average);
 	graph_delete((graph_t *)pmr->low);
@@ -52,6 +56,11 @@ prediction_metric_result_copy(prediction_metric_result_t *pmr)
 
 	INIT_LIST_HEAD(&new_pmr->list);
 	new_pmr->name = strdup(pmr->name);
+	new_pmr->hsize = pmr->hsize;
+	if (pmr->history) {
+		new_pmr->history = (sample_t *) malloc(pmr->hsize);
+		memcpy(new_pmr->history, pmr->history, pmr->hsize);
+	}
 	new_pmr->high = graph_copy(pmr->high);
 	new_pmr->average = graph_copy(pmr->average);
 	new_pmr->low = graph_copy(pmr->low);

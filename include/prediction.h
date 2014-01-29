@@ -18,6 +18,10 @@ typedef struct {
 
 	const char *name;
 
+	/* input */
+	history_size_t hsize;
+	sample_t *history;
+
 	/* prediction output */
 	const graph_t *high;
 	const graph_t *average;

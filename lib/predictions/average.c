@@ -32,8 +32,6 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 	/* for all input metrics */
 	list_for_each_entry(pos, &p_priv->metrics, list) {
 		sample_value_t p_high, p_average, p_low;
-		history_size_t hsize;
-		sample_t *history;
 		uint64_t sum = 0, sum_sq = 0;
 		float avr, avr_sq, std;
 		int i;
@@ -45,17 +43,17 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 		r = prediction_metric_result_create(metric_name(pos->base));
 
 		/* read the history of the metric */
-		hsize = metric_history_size(pos->base);
-		history = calloc(hsize, sizeof(sample_t));
-		hsize = metric_dump_history(pos->base, history, hsize);
+		r->hsize = metric_history_size(pos->base);
+		r->history = calloc(r->hsize, sizeof(sample_t));
+		r->hsize = metric_dump_history(pos->base, r->history, r->hsize);
 
 		/* compute the average and variance */
-		for (i = 0; i < hsize; i++) {
-			sum += history[i].value;
-			sum_sq += history[i].value * history[i].value;
+		for (i = 0; i < r->hsize; i++) {
+			sum += r->history[i].value;
+			sum_sq += r->history[i].value * r->history[i].value;
 		}
-		avr = ((float)sum) / hsize;
-		avr_sq = ((float)sum_sq) / hsize;
+		avr = ((float)sum) / r->hsize;
+		avr_sq = ((float)sum_sq) / r->hsize;
 		std = sqrtf(avr_sq - (avr * avr));
 
 		/* compute the high, average and low points */
@@ -81,8 +79,6 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 				p_low);
 
 		prediction_list_append(pl, r);
-
-		free(history);
 	}
 
 	return pl;

@@ -125,18 +125,6 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 		}
 	}
 
-	/* free all the metrics */
-	i = 0;
-	list_for_each_entry(pos_m, &p_priv->metrics, list) {
-		free(history[i]);
-		free(metrics_name[i]);
-		i++;
-	}
-	free(history);
-	free(metrics_name);
-	free(cur_index);
-	free(hsize);
-
 
 	//history_fsm_state_trans_prob_density(p_fsm->fsm, )
 	if (p_fsm->prob_density_filename) {
@@ -153,14 +141,18 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 	history_fsm_reset_transitions(p_fsm->hfsm);
 
 
-	/* all input metrics */
+	/* generate the output */
 	prediction_metric_t *pos;
+	i = 0;
 	list_for_each_entry(pos, &p_priv->metrics, list) {
 		prediction_metric_result_t *r;
-		r = prediction_metric_result_create(metric_name(pos->base));
 
 		if (metric_is_empty(pos->base))
 			continue;
+
+		r = prediction_metric_result_create(metric_name(pos->base));
+		r->hsize = hsize[i];
+		r->history = history[i];
 
 		graph_add_point((graph_t *)r->high,
 				0,
@@ -184,8 +176,19 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 				metric_get_last(pos->base).value);
 
 		prediction_list_append(pl, r);
+
+		/* do not free history[i] as it is also stored in
+		 * prediction_list. Free the metrics_name though. */
+		free(metrics_name[i]);
+
+		i++;
 	}
 
+	/* free all the metrics */
+	free(history);
+	free(metrics_name);
+	free(cur_index);
+	free(hsize);
 
 	return pl;
 }
