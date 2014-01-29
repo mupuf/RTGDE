@@ -58,8 +58,8 @@ prediction_metric_result_copy(prediction_metric_result_t *pmr)
 	new_pmr->name = strdup(pmr->name);
 	new_pmr->hsize = pmr->hsize;
 	if (pmr->history) {
-		new_pmr->history = (sample_t *) malloc(pmr->hsize);
-		memcpy(new_pmr->history, pmr->history, pmr->hsize);
+		new_pmr->history = (sample_t *) malloc(pmr->hsize * sizeof(sample_t));
+		memcpy(new_pmr->history, pmr->history, pmr->hsize * sizeof(sample_t));
 	}
 	new_pmr->high = graph_copy(pmr->high);
 	new_pmr->average = graph_copy(pmr->average);

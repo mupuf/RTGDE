@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -35,7 +36,7 @@ typedef struct {
 
 	/* private declarations */
 	char *name;
-	struct list_head predictions;
+	struct list_head metrics;
 	struct list_head models;
 	scoring_t *scoring;
 	decision_t *decision;
@@ -45,6 +46,10 @@ typedef struct {
 
 	flowgraph_callback_t user_cb;
 	void *user_cb_data;
+
+	/* CSV output */
+	char * csv_filename_format;
+	uint64_t flowgraph_exec_count;
 } flowgraph_priv_t;
 
 flowgraph_priv_t *flowgraph_priv(const flowgraph_t *f)
@@ -61,6 +66,71 @@ int64_t clock_read_us()
 	return tp.tv_sec * 1000000ULL + tp.tv_nsec / 1000;
 }
 
+static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
+{
+	decision_input_model_t *dim;
+	decision_input_metric_t* m;
+
+	if (!f_priv->csv_filename_format)
+		return;
+
+	dim = decision_input_model_get_first(di);
+	while (dim) {
+		m = decision_input_metric_get_first(dim);
+		while (m) {
+			sample_time_t last_sample_time;
+			char filename[PATH_MAX];
+			int i;
+
+			snprintf(filename, sizeof(filename), f_priv->csv_filename_format,
+				 m->prediction->name, f_priv->flowgraph_exec_count);
+
+			printf("filename = '%s'\n", filename);
+			FILE *f = fopen(filename, "w");
+			if (!f) {
+				perror("prediction csv output, fopen");
+				continue;
+			}
+
+			fprintf(f, "Time, %s, %s-low prediction, %s-average prediction, "
+				"%s-high prediction\n",
+				m->prediction->name,
+				m->prediction->name,
+				m->prediction->name,
+				m->prediction->name);
+
+			/* dump the history */
+			for (i = 0; i < m->prediction->hsize; i++) {
+				fprintf(f, "%" PRIu64 ", %i, , ,\n",
+					m->prediction->history[i].time,
+					m->prediction->history[i].value);
+				last_sample_time = m->prediction->history[i].time;
+			}
+
+			/* dump the predicted values */
+			const sample_t *s_low = graph_read_first(m->prediction->low);
+			const sample_t *s_avg = graph_read_first(m->prediction->average);
+			const sample_t *s_high = graph_read_first(m->prediction->high);
+
+			while (s_low && s_avg && s_high) {
+				fprintf(f, "%" PRIu64 ", , %i, %i, %i\n",
+					last_sample_time + s_low->time, s_low->value,
+					s_avg->value, s_high->value);
+
+				s_low = graph_read_next(m->prediction->low, s_low);
+				s_avg = graph_read_next(m->prediction->average, s_avg);
+				s_high = graph_read_next(m->prediction->high, s_high);
+			}
+
+			fclose(f);
+
+			m = decision_input_metric_get_next(m);
+		}
+
+		dim = decision_input_model_get_next(dim);
+	}
+}
+
 static void execute_flow_graph(flowgraph_priv_t *f_priv)
 {
 	flowgraph_prediction_t *pos_p;
@@ -72,7 +142,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	pthread_mutex_lock(&f_priv->config_mutex);
 
 	/* do the predictions for all attached predictions */
-	list_for_each_entry(pos_p, &f_priv->predictions, list) {
+	list_for_each_entry(pos_p, &f_priv->metrics, list) {
 		pos_p->last_prediction = prediction_exec(pos_p->base);
 	}
 
@@ -81,7 +151,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 		prediction_list_t *predictions = prediction_list_create();
 
 		/* unite all the predictions in one list */
-		list_for_each_entry(pos_p, &f_priv->predictions, list) {
+		list_for_each_entry(pos_p, &f_priv->metrics, list) {
 			prediction_list_append_list_copy(predictions,
 							   pos_p->last_prediction);
 		}
@@ -106,9 +176,12 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	if (f_priv->user_cb)
 		f_priv->user_cb((flowgraph_t*)f_priv, di, dim_sel, f_priv->user_cb_data);
 
+	/* write a nice report to the disc */
+	log_to_file(f_priv, di);
+
 	/* free all the ressources */
 	decision_input_delete(di);
-	list_for_each_entry(pos_p, &f_priv->predictions, list) {
+	list_for_each_entry(pos_p, &f_priv->metrics, list) {
 		prediction_list_delete(pos_p->last_prediction);
 		pos_p->last_prediction = NULL;
 	}
@@ -134,6 +207,8 @@ static void *thread_flowgraph (void *p_data)
 
 		/* real work */
 		execute_flow_graph(f_priv);
+
+		f_priv->flowgraph_exec_count++;
 
 		/* re-enable cancelation */
 		s = pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -165,7 +240,7 @@ flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 
 	pthread_mutex_init(&f_priv->config_mutex, NULL);
 
-	INIT_LIST_HEAD(&f_priv->predictions);
+	INIT_LIST_HEAD(&f_priv->metrics);
 	INIT_LIST_HEAD(&f_priv->models);
 	f_priv->scoring = s;
 	f_priv->decision = d;
@@ -173,6 +248,9 @@ flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 	f_priv->user_cb = user_cb;
 	f_priv->user_cb_data = user_cb_data;
 	f_priv->name = strdup(name);
+
+	f_priv->csv_filename_format = NULL;
+	f_priv->flowgraph_exec_count = 0;
 
 	return (flowgraph_t *)f_priv;
 }
@@ -199,7 +277,7 @@ int flowgraph_attach_prediction(flowgraph_t *f, prediction_t * p)
 	fp->base = p;
 	fp->last_prediction = NULL;
 
-	list_add_tail(&fp->list, &f_priv->predictions);
+	list_add_tail(&fp->list, &f_priv->metrics);
 
 exit:
 	pthread_mutex_unlock(&f_priv->config_mutex);
@@ -215,7 +293,7 @@ int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p)
 	pthread_mutex_lock(&f_priv->config_mutex);
 
 	/* free the metrics list */
-	list_for_each_entry_safe(pos, n, &f_priv->predictions, list) {
+	list_for_each_entry_safe(pos, n, &f_priv->metrics, list) {
 		if (pos->base == p) {
 			list_del(&(pos->list));
 			free(pos);
@@ -274,6 +352,16 @@ exit:
 	return ret;
 }
 
+void flowgraph_output_csv(flowgraph_t *f, const char *csv_filename_format)
+{
+	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+
+	if (f_priv->csv_filename_format)
+		free(f_priv->csv_filename_format);
+
+	f_priv->csv_filename_format = strdup(csv_filename_format);
+}
+
 int rtgde_start(flowgraph_t *f, int one_time)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
@@ -282,7 +370,6 @@ int rtgde_start(flowgraph_t *f, int one_time)
 
 	if (s != 0 && one_time) {
 		s = pthread_join(f_priv->thread, NULL);
-
 	}
 
 	return s;
@@ -313,10 +400,8 @@ void flowgraph_teardown(flowgraph_t *f)
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
-	free(f_priv->name);
-
 	/* free the prediction list */
-	list_for_each_entry_safe(pos_p, n_p, &f_priv->predictions, list) {
+	list_for_each_entry_safe(pos_p, n_p, &f_priv->metrics, list) {
 		list_del(&(pos_p->list));
 		prediction_list_delete(pos_p->last_prediction);
 		free(pos_p);
@@ -328,6 +413,9 @@ void flowgraph_teardown(flowgraph_t *f)
 		free(pos_m);
 	}
 
+	free(f_priv->name);
+	if (f_priv->csv_filename_format)
+		free(f_priv->csv_filename_format);
 	free(f);
 
 	/* never free the mutex to spot the use-after-free in some cases */

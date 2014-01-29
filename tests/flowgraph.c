@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
 	assert(!flowgraph_attach_model(data.f, data.m));
 
-	prediction_output_csv(data.mp, "pred_average_%s_%i.csv");
+	flowgraph_output_csv(data.f, "pred_average_%s_%i.csv");
 
 	rtgde_start(data.f, 0);
 

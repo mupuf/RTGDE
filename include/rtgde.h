@@ -33,6 +33,8 @@ int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p);
 int flowgraph_attach_model(flowgraph_t *f, model_t * m);
 int flowgraph_detach_model(flowgraph_t *f, model_t * m);
 
+void flowgraph_output_csv(flowgraph_t *f, const char *csv_filename_format);
+
 int rtgde_start(flowgraph_t *f, int one_time);
 int rtgde_stop(flowgraph_t *f);
 
