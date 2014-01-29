@@ -28,31 +28,37 @@ prediction_list_t *prediction_simple_exec(prediction_t *p)
 	/* all input metrics */
 	list_for_each_entry(pos, &p_priv->metrics, list) {
 		prediction_metric_result_t *r;
-		r = prediction_metric_result_create(metric_name(pos->base));
 
 		if (metric_is_empty(pos->base))
 			continue;
 
+		r = prediction_metric_result_create(metric_name(pos->base));
+
+		/* read the history of the metric */
+		r->hsize = metric_history_size(pos->base);
+		r->history = calloc(r->hsize, sizeof(sample_t));
+		r->hsize = metric_dump_history(pos->base, r->history, r->hsize);
+
 		graph_add_point((graph_t *)r->high,
 				0,
-				metric_get_last(pos->base).value);
+				r->history[r->hsize - 1].value);
 		graph_add_point((graph_t *)r->high,
 				simple->prediction_length,
-				metric_get_last(pos->base).value);
+				r->history[r->hsize - 1].value);
 
 		graph_add_point((graph_t *)r->average,
 				0,
-				metric_get_last(pos->base).value);
+				r->history[r->hsize - 1].value);
 		graph_add_point((graph_t *)r->average,
 				simple->prediction_length,
-				metric_get_last(pos->base).value);
+				r->history[r->hsize - 1].value);
 
 		graph_add_point((graph_t *)r->low,
 				0,
-				metric_get_last(pos->base).value);
+				r->history[r->hsize - 1].value);
 		graph_add_point((graph_t *)r->low,
 				simple->prediction_length,
-				metric_get_last(pos->base).value);
+				r->history[r->hsize - 1].value);
 
 		prediction_list_append(pl, r);
 	}
