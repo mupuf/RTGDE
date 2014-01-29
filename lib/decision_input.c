@@ -18,7 +18,7 @@ decision_input_model_t *decision_input_model_create(model_t *model)
 	if (!dim)
 		return NULL;
 
-	INIT_LIST_HEAD(&dim->predictions);
+	INIT_LIST_HEAD(&dim->metrics);
 	INIT_LIST_HEAD(&dim->list);
 	dim->parent = NULL;
 	dim->model = model;
@@ -35,6 +35,7 @@ decision_input_metric_t *decision_input_metric_create(prediction_metric_result_t
 		return NULL;
 
 	INIT_LIST_HEAD(&di_metric->list);
+	di_metric->parent = NULL;
 	di_metric->prediction = prediction;
 	di_metric->output = output;
 	di_metric->score = 0;
@@ -73,9 +74,10 @@ decision_input_model_t *decision_input_model_get_next(decision_input_model_t *di
 void decision_input_model_add_metric(decision_input_model_t *dim,
 				     decision_input_metric_t *di_metric)
 {
-	if (!decision_input_metric_from_name(dim, di_metric->prediction->name))
-		list_add_tail(&di_metric->list, &dim->predictions);
-	else {
+	if (!decision_input_metric_from_name(dim, di_metric->prediction->name)) {
+		list_add_tail(&di_metric->list, &dim->metrics);
+		di_metric->parent = dim;
+	} else {
 		fprintf(stderr, "decision_input_model_add_metric: "
 			"cannot add another metric whose name is identical to "
 			"one already-stored metric");
@@ -87,12 +89,29 @@ decision_input_metric_t *decision_input_metric_from_name(decision_input_model_t 
 {
 	decision_input_metric_t *pos;
 
-	list_for_each_entry(pos, &dim->predictions, list) {
+	list_for_each_entry(pos, &dim->metrics, list) {
 		if (strcmp(pos->prediction->name, name) ==0)
 			return pos;
 	}
 
 	return NULL;
+}
+
+decision_input_metric_t *decision_input_metric_get_first(decision_input_model_t *dim)
+{
+	if (list_empty(&dim->metrics))
+		return NULL;
+	else
+		return list_entry(dim->metrics.next, decision_input_metric_t, list);
+}
+
+decision_input_metric_t *decision_input_metric_get_next(decision_input_metric_t *di_metric)
+{
+	struct list_head * next = di_metric->list.next;
+	if (next == &di_metric->parent->metrics)
+		return NULL;
+	else
+		return list_entry(di_metric->list.next, decision_input_metric_t, list);
 }
 
 void decision_input_metric_delete(decision_input_metric_t *di_metric)
@@ -113,7 +132,7 @@ void decision_input_model_delete(decision_input_model_t *dim)
 		return;
 
 	/* free the predications and decision list */
-	list_for_each_entry_safe(pos, n, &dim->predictions, list) {
+	list_for_each_entry_safe(pos, n, &dim->metrics, list) {
 		list_del(&(pos->list));
 		decision_input_metric_delete(pos);
 	}
