@@ -31,7 +31,8 @@ decision_input_model_t * model_dummy_exec(model_t *m, prediction_list_t *input)
 
 		const sample_t *s = graph_read_first(metric->high);
 		while (s) {
-			graph_add_point(output, s->time, s->value * 1.2);
+			graph_add_point(output, s->time, s->value * 0.8);
+			graph_add_point(output, s->time + 50, s->value * 1.2);
 			s = graph_read_next(metric->high, s);
 		}
 

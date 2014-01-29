@@ -6,9 +6,13 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 
 #include "rtgde.h"
 #include "list.h"
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 #define die(en, msg) \
 	do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -93,33 +97,55 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 			}
 
 			fprintf(f, "Time, %s, %s-low prediction, %s-average prediction, "
-				"%s-high prediction\n",
+				"%s-high prediction, model-output (score = %f)\n",
 				m->prediction->name,
 				m->prediction->name,
 				m->prediction->name,
-				m->prediction->name);
+				m->prediction->name,
+				m->score);
+			/* TODO: Give names to models */
 
 			/* dump the history */
 			for (i = 0; i < m->prediction->hsize; i++) {
-				fprintf(f, "%" PRIu64 ", %i, , ,\n",
+				fprintf(f, "%" PRIu64 ", %i, , , ,\n",
 					m->prediction->history[i].time,
 					m->prediction->history[i].value);
 				last_sample_time = m->prediction->history[i].time;
 			}
 
-			/* dump the predicted values */
+			/* dump the predicted values + model output */
 			const sample_t *s_low = graph_read_first(m->prediction->low);
 			const sample_t *s_avg = graph_read_first(m->prediction->average);
 			const sample_t *s_high = graph_read_first(m->prediction->high);
+			const sample_t *s_model = graph_read_first(m->output);
+			assert(s_low->time == 0);
+			assert(s_avg->time == 0);
+			assert(s_high->time == 0);
+			assert(s_model->time == 0);
 
-			while (s_low && s_avg && s_high) {
-				fprintf(f, "%" PRIu64 ", , %i, %i, %i\n",
-					last_sample_time + s_low->time, s_low->value,
-					s_avg->value, s_high->value);
+			const sample_t *s_n_pred = s_low, *s_n_mod = s_model;
+			while (s_low && s_avg && s_high && s_model &&
+			       !(s_n_pred == NULL && s_n_mod == NULL)) {
+				sample_time_t max_time = MAX(s_low->time, s_model->time);
 
-				s_low = graph_read_next(m->prediction->low, s_low);
-				s_avg = graph_read_next(m->prediction->average, s_avg);
-				s_high = graph_read_next(m->prediction->high, s_high);
+				fprintf(f, "%" PRIu64 ", , %i, %i, %i, %i\n",
+					last_sample_time + max_time, s_low->value,
+					s_avg->value, s_high->value, s_model->value);
+
+				s_n_pred = graph_read_next(m->prediction->low, s_low);
+				s_n_mod = graph_read_next(m->output, s_model);
+
+				if ((!s_n_mod && s_n_pred) ||
+				    (s_n_pred && s_n_pred->time <= s_n_mod->time)) {
+					s_low = s_n_pred;
+					s_avg = graph_read_next(m->prediction->average, s_avg);
+					s_high = graph_read_next(m->prediction->high, s_high);
+					assert(s_low->time == s_avg->time);
+					assert(s_avg->time == s_high->time);
+				}
+				if ((!s_n_pred && s_n_mod) ||
+				    (s_n_mod && s_n_pred->time >= s_n_mod->time))
+					s_model = s_n_mod;
 			}
 
 			fclose(f);
