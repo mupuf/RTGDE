@@ -239,7 +239,7 @@ prediction_list_t *prediction_exec(prediction_t *p)
 		mh_size = metric_dump_history(pos->base, bh, mh_size);
 
 		for (i = 0; i < mh_size; i++) {
-			fprintf(f, "%" PRIu64 ", %i, 0, 0, 0\n",
+			fprintf(f, "%" PRIu64 ", %i, , ,\n",
 				bh[i].time, bh[i].value);
 			last_sample_time = bh[i].time;
 		}
@@ -252,7 +252,7 @@ prediction_list_t *prediction_exec(prediction_t *p)
 		const sample_t *s_high = graph_read_first(pred->high);
 
 		while (s_low && s_avg && s_high) {
-			fprintf(f, "%" PRIu64 ", 0, %i, %i, %i\n",
+			fprintf(f, "%" PRIu64 ", , %i, %i, %i\n",
 				last_sample_time + s_low->time, s_low->value,
 				s_avg->value, s_high->value);
 
