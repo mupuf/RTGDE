@@ -38,11 +38,11 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 		float avr, avr_sq, std;
 		int i;
 
-		prediction_metric_result_t *r;
-		r = prediction_metric_result_create(metric_name(pos->base));
-
 		if (metric_is_empty(pos->base))
 			continue;
+
+		prediction_metric_result_t *r;
+		r = prediction_metric_result_create(metric_name(pos->base));
 
 		/* read the history of the metric */
 		hsize = metric_history_size(pos->base);
@@ -81,6 +81,8 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 				p_low);
 
 		prediction_list_append(pl, r);
+
+		free(history);
 	}
 
 	return pl;
