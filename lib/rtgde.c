@@ -96,8 +96,8 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 				continue;
 			}
 
-			fprintf(f, "Time, %s, %s-low prediction, %s-average prediction, "
-				"%s-high prediction, model-output (score = %f)\n",
+			fprintf(f, "Time, %s, %s prediction low, %s prediction average, "
+				"%s prediction high, model output (score = %f)\n",
 				m->prediction->name,
 				m->prediction->name,
 				m->prediction->name,
@@ -107,10 +107,14 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 
 			/* dump the history */
 			for (i = 0; i < m->prediction->hsize; i++) {
+				if (i > 0)
+					fprintf(f, "%" PRIu64 ", %i, , , ,\n",
+						m->prediction->history[i].time - 1,
+						m->prediction->history[i - 1].value);
 				fprintf(f, "%" PRIu64 ", %i, , , ,\n",
 					m->prediction->history[i].time,
 					m->prediction->history[i].value);
-				last_sample_time = m->prediction->history[i].time;
+				last_sample_time = m->prediction->history[i].time + 1;
 			}
 
 			/* dump the predicted values + model output */
@@ -118,6 +122,7 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 			const sample_t *s_avg = graph_read_first(m->prediction->average);
 			const sample_t *s_high = graph_read_first(m->prediction->high);
 			const sample_t *s_model = graph_read_first(m->output);
+
 			assert(s_low->time == 0);
 			assert(s_avg->time == 0);
 			assert(s_high->time == 0);
@@ -134,6 +139,21 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 
 				s_n_pred = graph_read_next(m->prediction->low, s_low);
 				s_n_mod = graph_read_next(m->output, s_model);
+
+				sample_time_t time_next_sample;
+				if (s_n_pred && s_n_mod)
+					time_next_sample = MIN(s_n_pred->time, s_n_mod->time);
+				else if (s_n_pred)
+					time_next_sample = s_n_pred->time;
+				else if (s_n_mod)
+					time_next_sample = s_n_mod->time;
+				else
+					continue;
+
+				fprintf(f, "%" PRIu64 ", , %i, %i, %i, %i\n",
+					last_sample_time + time_next_sample - 1,
+					s_low->value, s_avg->value, s_high->value,
+					s_model->value);
 
 				if ((!s_n_mod && s_n_pred) ||
 				    (s_n_pred && s_n_pred->time <= s_n_mod->time)) {
