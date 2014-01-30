@@ -119,16 +119,12 @@ int scoring_exec(scoring_t *s, decision_input_t *di)
 			if (!m)
 				continue;
 
-			/* call the calc function */
-			/* score += metric_score * metric_weight */
-			m->score = s_priv->calc(s, m->prediction, m->output) * pos->weight;
-
-			/* model_score += metric_score */
-			dim->score += m->score;
+			m->score = s_priv->calc(s, m->prediction, m->output);
+			dim->score += m->score * pos->weight;
 
 			weights += pos->weight;
 		}
-		dim->score /= weights;
+		dim->score = dim->score / weights;
 		dim = decision_input_model_get_next(dim);
 	}
 
