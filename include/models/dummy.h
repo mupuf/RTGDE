@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-model_t * model_dummy_create();
+model_t * model_dummy_create(const char *name);
 
 #ifdef __cplusplus
 }

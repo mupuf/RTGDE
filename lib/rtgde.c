@@ -53,6 +53,7 @@ typedef struct {
 
 	/* CSV output */
 	char * csv_filename_format;
+	flowgraph_output_csv_cb_t output_cb;
 	uint64_t flowgraph_exec_count;
 } flowgraph_priv_t;
 
@@ -87,12 +88,12 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 			int i;
 
 			snprintf(filename, sizeof(filename), f_priv->csv_filename_format,
-				 m->prediction->name, f_priv->flowgraph_exec_count);
+				 model_name(dim->model), m->prediction->name,
+				 f_priv->flowgraph_exec_count);
 
-			printf("filename = '%s'\n", filename);
 			FILE *f = fopen(filename, "w");
 			if (!f) {
-				perror("prediction csv output, fopen");
+				perror("rtgde csv output, fopen");
 				continue;
 			}
 
@@ -169,6 +170,9 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 			}
 
 			fclose(f);
+
+			if (f_priv->output_cb)
+				f_priv->output_cb((flowgraph_t *)f_priv, m, filename);
 
 			m = decision_input_metric_get_next(m);
 		}
@@ -398,13 +402,15 @@ exit:
 	return ret;
 }
 
-void flowgraph_output_csv(flowgraph_t *f, const char *csv_filename_format)
+void flowgraph_output_csv(flowgraph_t *f, const char *csv_filename_format,
+			  flowgraph_output_csv_cb_t output_cb)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 
 	if (f_priv->csv_filename_format)
 		free(f_priv->csv_filename_format);
 
+	f_priv->output_cb = output_cb;
 	f_priv->csv_filename_format = strdup(csv_filename_format);
 }
 

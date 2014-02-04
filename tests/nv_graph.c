@@ -120,12 +120,12 @@ int main(int argc, char *argv[])
 					  NULL, NULL, 1000000);
 	assert(!flowgraph_attach_prediction(f, mp));
 
-	model_t * m = model_dummy_create();
+	model_t * m = model_dummy_create("dummy");
 	assert(m);
 
 	assert(!flowgraph_attach_model(f, m));
 
-	flowgraph_output_csv(f, "pred_graph_idle_%s_%i.csv");
+	flowgraph_output_csv(f, "pred_graph_idle_%s_%s_%i.csv", NULL);
 
 	do_work(argc, argv, f, me);
 

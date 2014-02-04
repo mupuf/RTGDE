@@ -48,11 +48,11 @@ void model_dummy_delete(model_t *m)
 	free(model_dummy(m));
 }
 
-model_t * model_dummy_create()
+model_t * model_dummy_create(const char *name)
 {
 	model_dummy_t *dummy = malloc(sizeof(model_dummy_t));
 	if (!dummy)
 		return NULL;
 
-	return model_create(model_dummy_exec, model_dummy_delete, (void *)dummy);
+	return model_create(model_dummy_exec, model_dummy_delete, name, (void *)dummy);
 }
