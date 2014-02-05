@@ -43,11 +43,16 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 		dim->model, dim->score);
 }
 
-void flowgraph_output_csv_cb(flowgraph_t *f,
-					  decision_input_metric_t* m,
+void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 					  const char *csv_filename)
 {
-	fprintf(stderr, "Output: %s\n", csv_filename);
+	char cmd[1024];
+
+	snprintf(cmd, sizeof(cmd),
+		 "gnuplot -e \"filename='%s'\" ../gnuplot/metric_overview.plot",
+		 csv_filename);
+	system(cmd);
+
 }
 
 int main(int argc, char **argv)
