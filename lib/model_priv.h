@@ -16,7 +16,4 @@ typedef struct {
 
 model_priv_t * model_priv(model_t *m);
 
-model_t * model_create(model_exec_t exec, model_delete_t dtor, const char *name,
-		       void *user);
-
 #endif // MODEL_PRIV_H
