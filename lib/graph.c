@@ -89,6 +89,19 @@ const sample_t * graph_read_first(const graph_t *g)
 	return (sample_t *)p;
 }
 
+const sample_t * graph_read_last(const graph_t *g)
+{
+	graph_priv_t *g_priv = graph_priv(g);
+
+	if (list_empty(&g_priv->point_lst))
+		return NULL;
+
+	graph_point_priv_t *p;
+	p = container_of(g_priv->point_lst.prev, graph_point_priv_t, list);
+
+	return (sample_t *)p;
+}
+
 const sample_t * graph_read_next(const graph_t *g, const sample_t *point)
 {
 	graph_priv_t *g_priv = graph_priv(g);

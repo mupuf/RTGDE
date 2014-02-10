@@ -26,6 +26,7 @@ int graph_add_point(graph_t *g, sample_time_t time, sample_value_t value);
 const sample_t * graph_read_point(const graph_t *g, graph_index_t index);
 
 const sample_t * graph_read_first(const graph_t *g);
+const sample_t * graph_read_last(const graph_t *g);
 const sample_t * graph_read_next(const graph_t *g, const sample_t *point);
 
 graph_index_t graph_point_count(const graph_t *g);

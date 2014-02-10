@@ -83,7 +83,7 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 	while (dim) {
 		m = decision_input_metric_get_first(dim);
 		while (m) {
-			sample_time_t last_sample_time;
+			int64_t last_sample_time;
 			char filename[PATH_MAX];
 			int i;
 
@@ -98,25 +98,26 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 			}
 
 			fprintf(f, "Time, %s, %s prediction low, %s prediction average, "
-				"%s prediction high, model output (score = %f)\n",
+				"%s prediction high, model '%s' output (score = %.3f)\n",
 				m->prediction->name,
 				m->prediction->name,
 				m->prediction->name,
 				m->prediction->name,
+				model_name(m->parent->model),
 				m->score);
-			/* TODO: Give names to models */
 
 			/* dump the history */
+			last_sample_time = m->prediction->history[m->prediction->hsize - 1].time;
 			for (i = 0; i < m->prediction->hsize; i++) {
 				if (i > 0)
-					fprintf(f, "%" PRIu64 ", %i, , , ,\n",
-						m->prediction->history[i].time - 1,
+					fprintf(f, "%" PRIi64 ", %i, , , ,\n",
+						m->prediction->history[i].time - 1 - last_sample_time,
 						m->prediction->history[i - 1].value);
-				fprintf(f, "%" PRIu64 ", %i, , , ,\n",
-					m->prediction->history[i].time,
+				fprintf(f, "%" PRIi64 ", %i, , , ,\n",
+					m->prediction->history[i].time - last_sample_time,
 					m->prediction->history[i].value);
-				last_sample_time = m->prediction->history[i].time + 1;
 			}
+			last_sample_time++;
 
 			/* dump the predicted values + model output */
 			const sample_t *s_low = graph_read_first(m->prediction->low);
@@ -135,7 +136,7 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 				sample_time_t max_time = MAX(s_low->time, s_model->time);
 
 				fprintf(f, "%" PRIu64 ", , %i, %i, %i, %i\n",
-					last_sample_time + max_time, s_low->value,
+					max_time, s_low->value,
 					s_avg->value, s_high->value, s_model->value);
 
 				s_n_pred = graph_read_next(m->prediction->low, s_low);
@@ -152,7 +153,7 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 					continue;
 
 				fprintf(f, "%" PRIu64 ", , %i, %i, %i, %i\n",
-					last_sample_time + time_next_sample - 1,
+					time_next_sample - 1,
 					s_low->value, s_avg->value, s_high->value,
 					s_model->value);
 
