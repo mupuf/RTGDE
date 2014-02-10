@@ -18,7 +18,6 @@ int prediction_simple_check(prediction_t *p)
 prediction_list_t *prediction_simple_exec(prediction_t *p)
 {
 	prediction_simple_t *simple = prediction_simple(p);
-	prediction_priv_t *p_priv = prediction_priv(p);
 	prediction_metric_t *pos;
 
 	prediction_list_t *pl = prediction_list_create();
@@ -26,7 +25,7 @@ prediction_list_t *prediction_simple_exec(prediction_t *p)
 		return NULL;
 
 	/* all input metrics */
-	list_for_each_entry(pos, &p_priv->metrics, list) {
+	list_for_each_entry(pos, prediction_metrics(p), list) {
 		prediction_metric_result_t *r;
 
 		if (metric_is_empty(pos->base))

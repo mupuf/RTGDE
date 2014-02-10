@@ -47,7 +47,6 @@ static int prediction_fsm_check(prediction_t *p)
 prediction_list_t *prediction_fsm_exec(prediction_t *p)
 {
 	prediction_fsm_t *p_fsm = prediction_fsm(p);
-	prediction_priv_t *p_priv = prediction_priv(p);
 	prediction_fsm_output_metric_t *pos_mo;
 	prediction_metric_t *pos_m;
 	int i = 0;
@@ -62,7 +61,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 	char **metrics_name = calloc(metrics_count, sizeof(char *));
 	size_t *cur_index = calloc(metrics_count, sizeof(size_t));
 	history_size_t *hsize = calloc(metrics_count, sizeof(history_size_t));
-	list_for_each_entry(pos_m, &p_priv->metrics, list) {
+	list_for_each_entry(pos_m, prediction_metrics(p), list) {
 		hsize[i] = metric_history_size(pos_m->base);
 		history[i] = calloc(hsize[i], sizeof(sample_t));
 		hsize[i] = metric_dump_history(pos_m->base, history[i], hsize[i]);
@@ -144,7 +143,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 	/* generate the output */
 	prediction_metric_t *pos;
 	i = 0;
-	list_for_each_entry(pos, &p_priv->metrics, list) {
+	list_for_each_entry(pos, prediction_metrics(p), list) {
 		prediction_metric_result_t *r;
 
 		if (metric_is_empty(pos->base))

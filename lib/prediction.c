@@ -160,6 +160,11 @@ uint32_t prediction_metrics_count(prediction_t* p)
 	return p_priv->metrics_count;
 }
 
+struct list_head *prediction_metrics(prediction_t *p)
+{
+	prediction_priv_t *p_priv = prediction_priv(p);
+	return &p_priv->metrics;
+}
 
 prediction_t * prediction_create(prediction_check_t check,
 				 prediction_exec_t exec,

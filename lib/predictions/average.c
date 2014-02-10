@@ -1,5 +1,4 @@
 #include "prediction.h"
-#include "../prediction_priv.h"
 #include "predictions/average.h"
 #include <stdint.h>
 #include <math.h>
@@ -22,7 +21,6 @@ int prediction_average_check(prediction_t *p)
 prediction_list_t *prediction_average_exec(prediction_t *p)
 {
 	prediction_average_t *average = prediction_average(p);
-	prediction_priv_t *p_priv = prediction_priv(p);
 	prediction_metric_t *pos;
 
 	prediction_list_t *pl = prediction_list_create();
@@ -30,7 +28,7 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 		return NULL;
 
 	/* for all input metrics */
-	list_for_each_entry(pos, &p_priv->metrics, list) {
+	list_for_each_entry(pos, prediction_metrics(p), list) {
 		sample_value_t p_high, p_average, p_low;
 		uint64_t sum = 0, sum_sq = 0;
 		float avr, avr_sq, std;
