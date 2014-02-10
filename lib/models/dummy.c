@@ -8,7 +8,7 @@ typedef struct {
 
 model_dummy_t * model_dummy(model_t* m)
 {
-	return (model_dummy_t*) model_priv(m)->user;
+	return (model_dummy_t*) model_user(m);
 }
 
 decision_input_model_t * model_dummy_exec(model_t *m, prediction_list_t *input)

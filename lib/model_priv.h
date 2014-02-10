@@ -14,6 +14,4 @@ typedef struct {
 	void *user;
 } model_priv_t;
 
-model_priv_t * model_priv(model_t *m);
-
 #endif // MODEL_PRIV_H

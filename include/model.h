@@ -18,7 +18,8 @@ typedef void (*model_delete_t)(model_t *m);
 model_t * model_create(model_exec_t exec, model_delete_t dtor, const char *name,
 		       void *user);
 
-const char *model_name();
+void *model_user(model_t *m);
+const char *model_name(model_t *m);
 decision_input_model_t *model_exec(model_t *m, prediction_list_t * predictions);
 void model_delete(model_t *m);
 

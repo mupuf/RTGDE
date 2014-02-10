@@ -149,7 +149,7 @@ void prediction_list_delete(prediction_list_t *pl)
 	free(pl);
 }
 
-prediction_priv_t * prediction_priv(prediction_t* p)
+static prediction_priv_t * prediction_priv(prediction_t* p)
 {
 	return (prediction_priv_t*) p;
 }

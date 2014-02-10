@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 
-fsm_priv_t *fsm_priv(fsm_t *fsm)
+static fsm_priv_t *fsm_priv(fsm_t *fsm)
 {
 	return (fsm_priv_t*)fsm;
 }

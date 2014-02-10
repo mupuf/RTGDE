@@ -22,9 +22,4 @@ typedef struct {
 	struct list_head point_lst;
 } graph_priv_t;
 
-graph_point_priv_t *graph_point_priv(const sample_t *p);
-graph_priv_t *graph_priv(const graph_t *g);
-
-
-
 #endif // GRAPH_PRIV_H

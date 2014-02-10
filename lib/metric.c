@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-metric_priv_t * metric_priv(metric_t* m)
+static metric_priv_t * metric_priv(metric_t* m)
 {
 	return (metric_priv_t *)m;
 }

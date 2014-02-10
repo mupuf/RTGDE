@@ -1,7 +1,7 @@
 #include "model_priv.h"
 #include <string.h>
 
-model_priv_t * model_priv(model_t *m)
+static model_priv_t * model_priv(model_t *m)
 {
 	return (model_priv_t *)m;
 }
@@ -19,6 +19,11 @@ model_t * model_create(model_exec_t exec, model_delete_t dtor, const char *name,
 	m_priv->name = strdup(name);
 
 	return (model_t*) m_priv;
+}
+
+void *model_user(model_t *m)
+{
+	return model_priv(m)->user;
 }
 
 const char *model_name(model_t *m)

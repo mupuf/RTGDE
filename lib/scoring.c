@@ -6,7 +6,7 @@ static scoring_metric_priv_t *score_metric_priv(scoring_metric_t *m)
 	return (scoring_metric_priv_t *)m;
 }
 
-scoring_priv_t *scoring_priv(scoring_t *s)
+static scoring_priv_t *scoring_priv(scoring_t *s)
 {
 	return (scoring_priv_t *)s;
 }

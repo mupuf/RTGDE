@@ -1,7 +1,7 @@
 #include "decision_priv.h"
 #include <string.h>
 
-decision_priv_t *decision_priv(decision_t *s)
+static decision_priv_t *decision_priv(decision_t *s)
 {
 	return (decision_priv_t *)s;
 }

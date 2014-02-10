@@ -1,7 +1,7 @@
 #include "graph_priv.h"
 #include <inttypes.h>
 
-graph_point_priv_t *graph_point_priv(const sample_t *p)
+static graph_point_priv_t *graph_point_priv(const sample_t *p)
 {
 	return (graph_point_priv_t *)p;
 }

@@ -21,6 +21,4 @@ typedef struct {
 	FILE *csv_output;
 } metric_priv_t;
 
-metric_priv_t * metric_priv(metric_t* m);
-
 #endif // METRIC_PRIV_H
