@@ -27,8 +27,9 @@ decision_input_model_t *decision_input_model_create(model_t *model)
 	return dim;
 }
 
-decision_input_metric_t *decision_input_metric_create(prediction_metric_result_t *prediction,
-						      graph_t *output)
+decision_input_metric_t *decision_input_metric_create(const char *name,
+					prediction_metric_result_t *prediction,
+					graph_t *output)
 {
 	decision_input_metric_t *di_metric = malloc(sizeof(decision_input_metric_t));
 	if (!di_metric)
@@ -36,6 +37,7 @@ decision_input_metric_t *decision_input_metric_create(prediction_metric_result_t
 
 	INIT_LIST_HEAD(&di_metric->list);
 	di_metric->parent = NULL;
+	di_metric->name = strdup(name);
 	di_metric->prediction = prediction;
 	di_metric->output = output;
 	di_metric->score = 0;
@@ -74,13 +76,13 @@ decision_input_model_t *decision_input_model_get_next(decision_input_model_t *di
 void decision_input_model_add_metric(decision_input_model_t *dim,
 				     decision_input_metric_t *di_metric)
 {
-	if (!decision_input_metric_from_name(dim, di_metric->prediction->name)) {
+	if (!decision_input_metric_from_name(dim, di_metric->name)) {
 		list_add_tail(&di_metric->list, &dim->metrics);
 		di_metric->parent = dim;
 	} else {
 		fprintf(stderr, "decision_input_model_add_metric: "
 			"cannot add another metric whose name is identical to "
-			"one already-stored metric");
+			"one already-stored metric\n");
 	}
 }
 
@@ -90,7 +92,7 @@ decision_input_metric_t *decision_input_metric_from_name(decision_input_model_t 
 	decision_input_metric_t *pos;
 
 	list_for_each_entry(pos, &dim->metrics, list) {
-		if (strcmp(pos->prediction->name, name) ==0)
+		if (strcmp(pos->name, name) ==0)
 			return pos;
 	}
 
@@ -119,6 +121,7 @@ void decision_input_metric_delete(decision_input_metric_t *di_metric)
 	if (!di_metric)
 		return;
 
+	free(di_metric->name);
 	prediction_metric_result_delete(di_metric->prediction);
 	graph_delete(di_metric->output);
 	free(di_metric);

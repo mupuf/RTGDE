@@ -1,0 +1,142 @@
+#include "model_simple_radio.h"
+#include "model.h"
+#include <assert.h>
+#include <inttypes.h>
+
+typedef struct {
+	uint32_t bitrate;
+	float energy_rx_to_tx;
+	float energy_tx_to_rx;
+	uint32_t delay_rx_to_tx_us;
+	uint32_t delay_tx_to_rx_us;
+	float pwr_rx_idle;
+	float pwr_tx;
+} model_simple_radio_t;
+
+
+model_simple_radio_t * model_simple_radio(model_t* m)
+{
+	return (model_simple_radio_t*) model_user(m);
+}
+
+decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *input)
+{
+	model_simple_radio_t *msr = model_simple_radio(m);
+	prediction_metric_result_t *psize, *pcount;
+	const sample_t *packet_count, *s_size, *s_size_next;
+	decision_input_metric_t *di_metric_occupancy, *di_metric_latency, *di_metric_pwr;
+	decision_input_model_t *dim;
+
+	psize = prediction_list_find(input, "packetSize");
+	if (!psize) {
+		fprintf(stderr, "model_simple_radio: metric packetSize has not been found!\n");
+		return NULL;
+	}
+
+	pcount = prediction_list_find(input, "packetCount");
+	if (!pcount) {
+		fprintf(stderr, "model_simple_radio: metric packetCount has not been found!\n");
+		return NULL;
+	}
+
+	dim = decision_input_model_create(m);
+	if (!dim)
+		 return NULL;
+
+	graph_t * o_rf_occupancy = graph_create();
+	graph_t * o_card_latency = graph_create();
+	graph_t * o_pwr = graph_create();
+	assert(o_rf_occupancy);
+	assert(o_card_latency);
+	assert(o_pwr);
+
+	packet_count = graph_read_last(pcount->average);
+
+	s_size = graph_read_first(psize->average);
+	s_size_next = graph_read_next(psize->average, s_size);
+	while (s_size && s_size_next) {
+		int64_t time_diff = s_size_next->time - s_size->time;
+		uint32_t packet_count_interval = packet_count->value * time_diff / packet_count->time;
+		int64_t rx_time = time_diff, tx_time, latency = 0;
+		sample_value_t rf_occupancy, card_latency, pwr;
+		float total_energy = 0.0;
+
+		tx_time = packet_count_interval * s_size->value * 8000000 / msr->bitrate;
+		rx_time -= packet_count_interval * msr->delay_rx_to_tx_us;
+		rx_time -= packet_count_interval * msr->delay_tx_to_rx_us;
+		rx_time -= tx_time;
+
+		if (rx_time < 0)
+			latency = -rx_time;
+		else
+			latency = 0;
+
+		total_energy += (float)packet_count_interval * msr->energy_rx_to_tx;
+		total_energy += (float)packet_count_interval * msr->energy_tx_to_rx;
+		total_energy += rx_time * msr->pwr_rx_idle / 1000000;
+		total_energy += tx_time * msr->pwr_tx / 1000000;
+
+		rf_occupancy = tx_time * 100.0 / time_diff;
+		card_latency = latency * 100.0 / time_diff;
+		pwr = total_energy * 1000000.0 / time_diff;
+
+		fprintf(stderr, "rx_time = %" PRIu64 ", tx_time = %" PRIu64 " conso = %fW\n"
+			, rx_time, tx_time, total_energy * 1000000 / time_diff);
+
+		graph_add_point(o_rf_occupancy, 0, rf_occupancy);
+		graph_add_point(o_rf_occupancy, s_size->time, rf_occupancy);
+
+		graph_add_point(o_card_latency, 0, card_latency);
+		graph_add_point(o_card_latency, s_size->time, card_latency);
+
+		graph_add_point(o_pwr, 0, pwr);
+		graph_add_point(o_pwr, s_size->time, pwr);
+
+		s_size = s_size_next;
+		s_size_next = graph_read_next(psize->average, s_size);
+	}
+
+	di_metric_occupancy = decision_input_metric_create("RF occupency",
+							   prediction_metric_result_copy(psize),
+							   o_rf_occupancy);
+	di_metric_latency = decision_input_metric_create("Emission latency",
+							 prediction_metric_result_copy(psize),
+							 o_card_latency);
+	di_metric_pwr = decision_input_metric_create("Power consumption",
+						     prediction_metric_result_copy(psize),
+						     o_pwr);
+	decision_input_model_add_metric(dim, di_metric_occupancy);
+	decision_input_model_add_metric(dim, di_metric_latency);
+	decision_input_model_add_metric(dim, di_metric_pwr);
+
+	return dim;
+}
+
+void model_simple_radio_delete(model_t *m)
+{
+	free(model_simple_radio(m));
+}
+
+model_t * model_simple_radio_create(const char *name, uint32_t bitrate,
+				    float energy_rx_to_tx,
+				    float energy_tx_to_rx,
+				    uint32_t delay_rx_to_tx_us,
+				    float delay_tx_to_rx_us,
+				    float pwr_rx_idle, float pwr_tx)
+{
+	model_simple_radio_t *radio_simple = malloc(sizeof(model_simple_radio_t));
+	if (!radio_simple)
+		return NULL;
+
+	radio_simple->bitrate = bitrate;
+	radio_simple->delay_rx_to_tx_us = delay_rx_to_tx_us;
+	radio_simple->delay_tx_to_rx_us = delay_tx_to_rx_us;
+	radio_simple->energy_rx_to_tx = energy_rx_to_tx;
+	radio_simple->energy_tx_to_rx = energy_tx_to_rx;
+	radio_simple->pwr_rx_idle = pwr_rx_idle;
+	radio_simple->pwr_tx = pwr_tx;
+
+	return model_create(model_simple_radio_exec, model_simple_radio_delete,
+			    name, (void *)radio_simple);
+}
+

@@ -56,11 +56,13 @@ prediction_t * prediction_create(prediction_check_t check,
 				 void *user);
 
 prediction_metric_result_t *prediction_metric_result_create(const char *name);
+prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr);
 const char *prediction_name(prediction_t* p);
 void prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr);
 uint32_t prediction_metrics_count(prediction_t* p);
 struct list_head *prediction_metrics(prediction_t *p);
 int prediction_attach_metric(prediction_t *p, metric_t *m);
+metric_t *prediction_find_metric(prediction_t *p, const char *name);
 prediction_list_t *prediction_exec(prediction_t *p);
 void prediction_delete(prediction_t *p);
 

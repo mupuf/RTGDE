@@ -6,7 +6,8 @@
 #include <string.h>
 
 #include <predictions/pred_fsm.h>
-#include <models/dummy.h>
+#include "pred_packets.h"
+#include "model_simple_radio.h"
 
 #define NETIF_DATARATE 12500000 // 100 MBit/s
 
@@ -131,18 +132,8 @@ void read_from_file(metric_t * me, const char *filepath)
 		if (pkt.timestamp <= last)
 			pkt.timestamp = last + 1;
 
-		uint64_t time_end = pkt.timestamp + pkt.len * 1000000 / NETIF_DATARATE;
-
-		metric_update(me, pkt.timestamp - 1, 0);
-		metric_update(me, pkt.timestamp, NETIF_DATARATE);
-		metric_update(me, time_end, NETIF_DATARATE);
-		metric_update(me, time_end + 1, 0);
-
-		last = time_end + 1;
+		metric_update(me, pkt.timestamp, pkt.len);
 	}
-
-	/* wait for the prediction to be done and quit */
-	sleep(1);
 }
 
 void usage(int argc, char **argv)
@@ -200,6 +191,18 @@ int fsm_pred_throuput_metric_from_state(fsm_state_t *state,
 		return 1;
 }
 
+void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
+					  const char *csv_filename)
+{
+	char cmd[1024];
+
+	snprintf(cmd, sizeof(cmd),
+		 "gnuplot -e \"filename='%s'\" ../gnuplot/metric_overview.plot",
+		 csv_filename);
+	system(cmd);
+
+}
+
 int main(int argc, char *argv[])
 {
 	fsm_t *pred_fsm = fsm_create(fsm_pred_throuput_next_state, NULL, &fsm_pred_data);
@@ -207,12 +210,14 @@ int main(int argc, char *argv[])
 	fsm_pred_data.off.fsm_st = fsm_add_state(pred_fsm, "OFF", &fsm_pred_data.off);
 	fsm_pred_data.cur = fsm_pred_data.off.fsm_st;
 
-	prediction_t * mp = prediction_fsm_create(pred_fsm,
+	/*prediction_t * mp = prediction_fsm_create(pred_fsm,
 						  fsm_pred_throuput_metric_from_state,
 						  250000, 10);
+	assert(mp);*/
+	prediction_t * mp = pred_packets_create(1000000, 2);
 	assert(mp);
 
-	metric_t * me = metric_create("throughput", 1000);
+	metric_t * me = metric_create("packets", 1000);
 	assert(me);
 
 	assert(!prediction_attach_metric(mp, me));
@@ -220,16 +225,17 @@ int main(int argc, char *argv[])
 					  NULL, NULL, 1000000);
 	assert(!flowgraph_attach_prediction(f, mp));
 
-	model_t * m = model_dummy_create("dummy");
+	model_t * m = model_simple_radio_create("radio1", 6000000, 0.001, 0.001,
+						100, 20, 0.1, 0.2);
 	assert(m);
 
 	assert(!flowgraph_attach_model(f, m));
 
-	flowgraph_output_csv(f, "pred_simple_%s_%s_%i.csv", NULL);
-
-	rtgde_start(f, 0);
+	flowgraph_output_csv(f, "pcap_%s_%s_%i.csv", flowgraph_output_csv_cb);
 
 	do_work(argc, argv, me, 10000000);
+
+	rtgde_start(f, 1);
 
 	flowgraph_teardown(f);
 

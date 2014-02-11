@@ -38,7 +38,7 @@ target_link_libraries(test_graph rtgde)
 add_executable(test_flowgraph tests/flowgraph.c)
 target_link_libraries(test_flowgraph rtgde)
 
-add_executable(test_pcap tests/pcap/pcap.c)
+add_executable(test_pcap tests/pcap/pcap.c tests/pcap/model_simple_radio.c tests/pcap/pred_packets.c)
 target_link_libraries(test_pcap rtgde ${PCAP_LIBRARY})
 
 add_executable(test_nv_graph tests/nv_graph.c)

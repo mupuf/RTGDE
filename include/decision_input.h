@@ -27,6 +27,7 @@ typedef struct {
 typedef struct {
 	struct list_head list;
 	decision_input_model_t *parent;
+	char *name;
 
 	prediction_metric_result_t *prediction;
 	graph_t *output;
@@ -35,7 +36,8 @@ typedef struct {
 
 decision_input_t * decision_input_create();
 decision_input_model_t * decision_input_model_create(model_t *model);
-decision_input_metric_t * decision_input_metric_create(prediction_metric_result_t *prediction,
+decision_input_metric_t * decision_input_metric_create(const char *name,
+						       prediction_metric_result_t *prediction,
 						       graph_t *output);
 void decision_input_add_model(decision_input_t *di, decision_input_model_t *dim);
 decision_input_model_t *decision_input_model_get_first(decision_input_t *di);

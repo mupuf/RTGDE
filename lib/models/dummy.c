@@ -36,7 +36,8 @@ decision_input_model_t * model_dummy_exec(model_t *m, prediction_list_t *input)
 			s = graph_read_next(metric->high, s);
 		}
 
-		di_metric = decision_input_metric_create(metric, output);
+		di_metric = decision_input_metric_create(metric->name,
+							 metric, output);
 		decision_input_model_add_metric(dim, di_metric);
 	} while (metric);
 

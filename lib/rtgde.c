@@ -83,12 +83,12 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 	while (dim) {
 		m = decision_input_metric_get_first(dim);
 		while (m) {
-			int64_t last_sample_time;
+			int64_t last_sample_time = 0;
 			char filename[PATH_MAX];
 			int i;
 
 			snprintf(filename, sizeof(filename), f_priv->csv_filename_format,
-				 model_name(dim->model), m->prediction->name,
+				 model_name(dim->model), m->name,
 				 f_priv->flowgraph_exec_count);
 
 			FILE *f = fopen(filename, "w");
@@ -107,17 +107,20 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 				m->score);
 
 			/* dump the history */
-			last_sample_time = m->prediction->history[m->prediction->hsize - 1].time;
-			for (i = 0; i < m->prediction->hsize; i++) {
-				if (i > 0)
+			if (m->prediction->hsize > 0) {
+				last_sample_time = m->prediction->history[m->prediction->hsize - 1].time;
+				for (i = 0; i < m->prediction->hsize; i++) {
+					if (i > 0)
+						fprintf(f, "%" PRIi64 ", %i, , , ,\n",
+							m->prediction->history[i].time - 1 - last_sample_time,
+							m->prediction->history[i - 1].value);
 					fprintf(f, "%" PRIi64 ", %i, , , ,\n",
-						m->prediction->history[i].time - 1 - last_sample_time,
-						m->prediction->history[i - 1].value);
-				fprintf(f, "%" PRIi64 ", %i, , , ,\n",
-					m->prediction->history[i].time - last_sample_time,
-					m->prediction->history[i].value);
-			}
-			last_sample_time++;
+						m->prediction->history[i].time - last_sample_time,
+						m->prediction->history[i].value);
+				}
+				last_sample_time++;
+			} else
+				last_sample_time = 0;
 
 			/* dump the predicted values + model output */
 			const sample_t *s_low = graph_read_first(m->prediction->low);

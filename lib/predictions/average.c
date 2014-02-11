@@ -59,7 +59,6 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 		p_average = avr;
 		p_low = avr - average->confidence_factor * std;
 
-
 		/* Add the points to the prediction */
 		graph_add_point((graph_t *)r->high, 0, p_high);
 		graph_add_point((graph_t *)r->high,

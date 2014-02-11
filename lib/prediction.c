@@ -60,7 +60,8 @@ prediction_metric_result_copy(prediction_metric_result_t *pmr)
 	if (pmr->history) {
 		new_pmr->history = (sample_t *) malloc(pmr->hsize * sizeof(sample_t));
 		memcpy(new_pmr->history, pmr->history, pmr->hsize * sizeof(sample_t));
-	}
+	} else
+		new_pmr->history = NULL;
 	new_pmr->high = graph_copy(pmr->high);
 	new_pmr->average = graph_copy(pmr->average);
 	new_pmr->low = graph_copy(pmr->low);
@@ -228,21 +229,27 @@ void prediction_delete(prediction_t *p)
 	p_priv->name = (char *)42;
 }
 
-int prediction_attach_metric(prediction_t *p, metric_t *m)
+metric_t *prediction_find_metric(prediction_t *p, const char *name)
 {
 	prediction_priv_t *p_priv = prediction_priv(p);
 	prediction_metric_t *pos;
-	prediction_metric_t *pm;
 
 	list_for_each_entry(pos, &p_priv->metrics, list) {
-		if (strcmp(metric_name(pos->base), metric_name(m)) == 0) {
-			fprintf(stderr,
-				"prediction_attach_metric: "
-				"Metric '%s' is already attached\n",
-				metric_name(m));
-			return 1;
+		if (strcmp(metric_name(pos->base), name) == 0) {
+			return pos->base;
 		}
 	}
+
+	return NULL;
+}
+
+int prediction_attach_metric(prediction_t *p, metric_t *m)
+{
+	prediction_priv_t *p_priv = prediction_priv(p);
+	prediction_metric_t *pm;
+
+	if (prediction_find_metric(p, metric_name(m)))
+		return 1;
 
 	pm = malloc(sizeof(prediction_metric_t));
 	if (!pm)
