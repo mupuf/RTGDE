@@ -38,7 +38,7 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 			continue;
 
 		prediction_metric_result_t *r;
-		r = prediction_metric_result_create(metric_name(pos->base));
+		r = prediction_metric_result_create(metric_name(pos->base), scoring_normal);
 
 		/* read the history of the metric */
 		r->hsize = metric_history_size(pos->base);

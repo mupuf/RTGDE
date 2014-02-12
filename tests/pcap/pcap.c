@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 					  NULL, NULL, 1000000);
 	assert(!flowgraph_attach_prediction(f, mp));
 
-	model_t * m = model_simple_radio_create("radio1", 6000000, 0.001, 0.001,
+	model_t * m = model_simple_radio_create("radio1", 10000, 0.001, 0.001,
 						100, 20, 0.1, 0.2);
 	assert(m);
 

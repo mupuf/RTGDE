@@ -40,7 +40,7 @@ typedef struct {
 
 	/* private declarations */
 	char *name;
-	struct list_head metrics;
+	struct list_head predictions;
 	struct list_head models;
 	scoring_t *scoring;
 	decision_t *decision;
@@ -195,17 +195,17 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
-	/* do the predictions for all attached predictions */
-	list_for_each_entry(pos_p, &f_priv->metrics, list) {
+	/* exec all attached predictions */
+	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		pos_p->last_prediction = prediction_exec(pos_p->base);
 	}
 
-	/* feed the predictions to the models */
+	/* exec all the models */
 	list_for_each_entry(pos_m, &f_priv->models, list) {
 		prediction_list_t *predictions = prediction_list_create();
 
 		/* unite all the predictions in one list */
-		list_for_each_entry(pos_p, &f_priv->metrics, list) {
+		list_for_each_entry(pos_p, &f_priv->predictions, list) {
 			prediction_list_append_list_copy(predictions,
 							   pos_p->last_prediction);
 		}
@@ -235,7 +235,7 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 	/* free all the ressources */
 	decision_input_delete(di);
-	list_for_each_entry(pos_p, &f_priv->metrics, list) {
+	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		prediction_list_delete(pos_p->last_prediction);
 		pos_p->last_prediction = NULL;
 	}
@@ -294,7 +294,7 @@ flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 
 	pthread_mutex_init(&f_priv->config_mutex, NULL);
 
-	INIT_LIST_HEAD(&f_priv->metrics);
+	INIT_LIST_HEAD(&f_priv->predictions);
 	INIT_LIST_HEAD(&f_priv->models);
 	f_priv->scoring = s;
 	f_priv->decision = d;
@@ -331,7 +331,7 @@ int flowgraph_attach_prediction(flowgraph_t *f, prediction_t * p)
 	fp->base = p;
 	fp->last_prediction = NULL;
 
-	list_add_tail(&fp->list, &f_priv->metrics);
+	list_add_tail(&fp->list, &f_priv->predictions);
 
 exit:
 	pthread_mutex_unlock(&f_priv->config_mutex);
@@ -346,8 +346,8 @@ int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p)
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
-	/* free the metrics list */
-	list_for_each_entry_safe(pos, n, &f_priv->metrics, list) {
+	/* look for this entry in the predictions list */
+	list_for_each_entry_safe(pos, n, &f_priv->predictions, list) {
 		if (pos->base == p) {
 			list_del(&(pos->list));
 			free(pos);
@@ -457,7 +457,7 @@ void flowgraph_teardown(flowgraph_t *f)
 	pthread_mutex_lock(&f_priv->config_mutex);
 
 	/* free the prediction list */
-	list_for_each_entry_safe(pos_p, n_p, &f_priv->metrics, list) {
+	list_for_each_entry_safe(pos_p, n_p, &f_priv->predictions, list) {
 		list_del(&(pos_p->list));
 		prediction_list_delete(pos_p->last_prediction);
 		free(pos_p);

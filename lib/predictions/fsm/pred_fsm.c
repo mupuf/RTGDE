@@ -149,7 +149,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 		if (metric_is_empty(pos->base))
 			continue;
 
-		r = prediction_metric_result_create(metric_name(pos->base));
+		r = prediction_metric_result_create(metric_name(pos->base), scoring_normal);
 		r->hsize = hsize[i];
 		r->history = history[i];
 

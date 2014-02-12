@@ -6,7 +6,20 @@
 extern "C" {
 #endif
 
-prediction_metric_result_t *prediction_metric_result_create(const char *name)
+const char *pmr_usage_hint_to_str(pmr_usage_hint_t hint)
+{
+	switch(hint)
+	{
+	case pmr_usage_prediction:
+		return "prediction";
+	case pmr_usage_constraint:
+		return "constraint";
+	}
+	return "<not_a_valid_hint>";
+}
+
+prediction_metric_result_t *prediction_metric_result_create(const char *name,
+						score_simple_style_t scoring_style)
 {
 	prediction_metric_result_t *pmr = malloc(sizeof(prediction_metric_result_t));
 	if (!pmr)
@@ -14,6 +27,8 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name)
 
 	INIT_LIST_HEAD(&pmr->list);
 	pmr->name = strdup(name);
+	pmr->scoring_style = scoring_style;
+	pmr->usage_hint = pmr_usage_prediction;
 	pmr->hsize = 0;
 	pmr->history = NULL;
 	pmr->high = graph_create();

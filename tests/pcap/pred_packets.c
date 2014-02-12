@@ -39,8 +39,8 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 		return NULL;
 
 	prediction_metric_result_t *r_size, *r_count;
-	r_size = prediction_metric_result_create("packetSize");
-	r_count = prediction_metric_result_create("packetCount");
+	r_size = prediction_metric_result_create("packetSize", scoring_normal);
+	r_count = prediction_metric_result_create("packetCount", scoring_normal);
 	if (!r_size || !r_count) {
 		if (r_size)
 			prediction_metric_result_delete(r_size);

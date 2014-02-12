@@ -77,11 +77,10 @@ decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *
 		total_energy += tx_time * msr->pwr_tx / 1000000;
 
 		rf_occupancy = tx_time * 100.0 / time_diff;
-		card_latency = latency * 100.0 / time_diff;
-		pwr = total_energy * 1000000.0 / time_diff;
+		card_latency = latency / packet_count_interval;
+		pwr = total_energy * 1000 * 1000000.0 / time_diff;
 
-		fprintf(stderr, "rx_time = %" PRIu64 ", tx_time = %" PRIu64 " conso = %fW\n"
-			, rx_time, tx_time, total_energy * 1000000 / time_diff);
+		rf_occupancy = rf_occupancy < 100?rf_occupancy:100;
 
 		graph_add_point(o_rf_occupancy, s_size->time, rf_occupancy);
 		graph_add_point(o_card_latency, s_size->time, card_latency);

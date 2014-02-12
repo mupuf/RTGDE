@@ -13,7 +13,6 @@ typedef struct {
 
 float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out)
 {
-	score_simple_t *simple = (score_simple_t*) scoring_user(s);
 	const sample_t *h, *nh, *a, *na, *l, *nl, *m, *nm;
 	sample_time_t last_update = 0, start_time;
 	double score = 0.0, score_seg = 0.0;
@@ -55,7 +54,7 @@ float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, con
 		fprintf(stderr, "p (%i, %i, %i) m (%i): score_seg = %f\n",
 			h->value, a->value, l->value, m->value, score_seg);
 
-		if (simple->inverted)
+		if (pmr->scoring_style == scoring_inverted)
 			score_seg = 1.0 - score_seg;
 
 		/* calc score */
@@ -86,13 +85,11 @@ void score_simple_dtor(scoring_t *s)
 	free(scoring_user(s));
 }
 
-scoring_t * score_simple_create(score_simple_style_t inverted)
+scoring_t * score_simple_create()
 {
 	score_simple_t *simple = malloc(sizeof(score_simple_t));
 	if (!simple)
 		return NULL;
-
-	simple->inverted = inverted;
 
 	return scoring_create(score_simple_calc, score_simple_dtor,
 			    "score_simple", (void *)simple);

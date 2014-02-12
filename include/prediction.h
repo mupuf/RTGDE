@@ -13,10 +13,23 @@ typedef struct {
 	void *user;
 } prediction_t;
 
+typedef enum
+{
+	pmr_usage_prediction = 0,
+	pmr_usage_constraint
+} pmr_usage_hint_t;
+
+typedef enum {
+	scoring_normal = 0,
+	scoring_inverted = 1
+} score_simple_style_t;
+
 typedef struct {
 	struct list_head list;
 
 	const char *name;
+	score_simple_style_t scoring_style;
+	pmr_usage_hint_t usage_hint;
 
 	/* input */
 	history_size_t hsize;
@@ -28,9 +41,14 @@ typedef struct {
 	const graph_t *low;
 } prediction_metric_result_t;
 
+
 typedef struct list_head prediction_list_t;
 
+const char *pmr_usage_hint_to_str(pmr_usage_hint_t hint);
+
 prediction_list_t * prediction_list_create();
+prediction_metric_result_t *prediction_metric_result_create(const char *name, score_simple_style_t scoring_style);
+prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr);
 int prediction_list_append_list_copy(prediction_list_t *po, const prediction_list_t *npl);
 prediction_metric_result_t * prediction_list_find(prediction_list_t *input, const char *metric_name);
 prediction_metric_result_t * prediction_list_extract_by_name(prediction_list_t *input, const char *metric_name);
@@ -54,9 +72,6 @@ prediction_t * prediction_create(prediction_check_t check,
 				 prediction_delete_t dtor,
 				 const char *name,
 				 void *user);
-
-prediction_metric_result_t *prediction_metric_result_create(const char *name);
-prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr);
 const char *prediction_name(prediction_t* p);
 void prediction_list_append(prediction_list_t *pl, prediction_metric_result_t *pmr);
 uint32_t prediction_metrics_count(prediction_t* p);
