@@ -83,26 +83,21 @@ decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *
 		fprintf(stderr, "rx_time = %" PRIu64 ", tx_time = %" PRIu64 " conso = %fW\n"
 			, rx_time, tx_time, total_energy * 1000000 / time_diff);
 
-		graph_add_point(o_rf_occupancy, 0, rf_occupancy);
 		graph_add_point(o_rf_occupancy, s_size->time, rf_occupancy);
-
-		graph_add_point(o_card_latency, 0, card_latency);
 		graph_add_point(o_card_latency, s_size->time, card_latency);
-
-		graph_add_point(o_pwr, 0, pwr);
 		graph_add_point(o_pwr, s_size->time, pwr);
 
 		s_size = s_size_next;
 		s_size_next = graph_read_next(psize->average, s_size);
 	}
 
-	di_metric_occupancy = decision_input_metric_create("RF occupency",
+	di_metric_occupancy = decision_input_metric_create("RF_occupency",
 							   prediction_metric_result_copy(psize),
 							   o_rf_occupancy);
-	di_metric_latency = decision_input_metric_create("Emission latency",
+	di_metric_latency = decision_input_metric_create("Emission_latency",
 							 prediction_metric_result_copy(psize),
 							 o_card_latency);
-	di_metric_pwr = decision_input_metric_create("Power consumption",
+	di_metric_pwr = decision_input_metric_create("Power_consumption",
 						     prediction_metric_result_copy(psize),
 						     o_pwr);
 	decision_input_model_add_metric(dim, di_metric_occupancy);

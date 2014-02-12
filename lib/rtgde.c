@@ -145,7 +145,7 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 				s_n_pred = graph_read_next(m->prediction->low, s_low);
 				s_n_mod = graph_read_next(m->output, s_model);
 
-				sample_time_t time_next_sample;
+				/*sample_time_t time_next_sample;
 				if (s_n_pred && s_n_mod)
 					time_next_sample = MIN(s_n_pred->time, s_n_mod->time);
 				else if (s_n_pred)
@@ -158,7 +158,7 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 				fprintf(f, "%" PRIu64 ", , %i, %i, %i, %i\n",
 					time_next_sample - 1,
 					s_low->value, s_avg->value, s_high->value,
-					s_model->value);
+					s_model->value);*/
 
 				if ((!s_n_mod && s_n_pred) ||
 				    (s_n_pred && s_n_pred->time <= s_n_mod->time)) {
