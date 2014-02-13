@@ -61,6 +61,7 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 
 	/* compute the average and variance of the size + wake up counts */
 	time_span = r_size->history[r_size->hsize - 1].time - r_size->history[0].time;
+	time_span = time_span > 0 ? time_span : 1;
 	for (i = 0; i < r_size->hsize; i++) {
 		sum_size += r_size->history[i].value;
 		sum_size_sq += r_size->history[i].value * r_size->history[i].value;

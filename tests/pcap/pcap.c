@@ -13,7 +13,20 @@
 #include "pred_packets.h"
 #include "model_simple_radio.h"
 
-#define NETIF_DATARATE 12500000 // 100 MBit/s
+struct flowgraph_data {
+	prediction_t * mp;
+	metric_t * me_pkt;
+	prediction_t * p_pwr;
+	prediction_t * p_occ;
+	prediction_t * p_lat;
+	model_t * m_rwifi;
+	model_t * m_rgsm;
+	scoring_t * scoring;
+	decision_t * decision;
+	flowgraph_t *f;
+
+	FILE *log_decision;
+} data;
 
 #ifdef HAS_LIBPCAP
 #include <pcap.h>
@@ -24,6 +37,11 @@ int64_t relative_time_us()
 	if (boot_time == 0)
 		boot_time = clock_read_us();
 	return clock_read_us() - boot_time;
+}
+
+int64_t timeval_to_us(struct timeval tv)
+{
+	return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
 int capture_packets(metric_t * me, int64_t timeout_us)
@@ -54,16 +72,14 @@ int capture_packets(metric_t * me, int64_t timeout_us)
 		return(2);
 	}
 
+	rtgde_start(data.f, 0);
+
 	/* Grab a packet */
 	metric_update(me, 0, 0);
 	while (relative_time_us() < timeout_us) {
 		pcap_next(handle, &header);
-		int64_t time = relative_time_us();
 
-		metric_update(me, time - 1, 0);
-		metric_update(me, time, NETIF_DATARATE);
-		metric_update(me, time + header.len * 1000000 / NETIF_DATARATE, NETIF_DATARATE);
-		metric_update(me, time + (header.len * 1000000 / NETIF_DATARATE) + 1, 0);
+		metric_update(me, timeval_to_us(header.ts), header.len);
 	}
 
 	/* And close the session */
@@ -115,6 +131,7 @@ int pcap_read_packet_header(FILE *file, struct pcap_packet *pkt)
 	return 0;
 }
 
+#include <sched.h>
 void read_from_file(metric_t * me, const char *filepath)
 {
 	struct pcap_packet pkt;
@@ -127,16 +144,24 @@ void read_from_file(metric_t * me, const char *filepath)
 		fprintf(stderr, "Invalid magic number. The file '%s' isn't a pcap file\n", filepath);
 	}
 
-	sample_time_t last = 0;
+	rtgde_start(data.f, 0);
+
+	int64_t last = 0, rel = 0;
 	while (!pcap_read_packet_header(finput, &pkt))
 	{
-		if (pkt.len < 200)
-			continue;
+		if (rel == 0)
+			rel = pkt.timestamp - relative_time_us();
 
 		if (pkt.timestamp <= last)
 			pkt.timestamp = last + 1;
+		last = pkt.timestamp;
+
+		while (relative_time_us() < pkt.timestamp - rel) {
+			usleep(100);
+		}
 
 		metric_update(me, pkt.timestamp, pkt.len);
+
 	}
 }
 
@@ -181,21 +206,6 @@ void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 
 }
 
-struct flowgraph_data {
-	prediction_t * mp;
-	metric_t * me_pkt;
-	prediction_t * p_pwr;
-	prediction_t * p_occ;
-	prediction_t * p_lat;
-	model_t * m_rwifi;
-	model_t * m_rgsm;
-	scoring_t * scoring;
-	decision_t * decision;
-	flowgraph_t *f;
-
-	FILE *log_decision;
-} data;
-
 void decision_callback(flowgraph_t *f, decision_input_t *di,
 		       decision_input_model_t *dim, void *user)
 {
@@ -222,6 +232,8 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 	fprintf(data.log_decision, "%" PRIu64 ", %f, %f, %f, %f\n", relative_time_us(),
 		wifi->score, gsm->score,
 		wifi==dim?wifi->score:0, gsm==dim?gsm->score:0);
+	fflush(data.log_decision);
+	fsync(fileno(data.log_decision));
 }
 
 int main(int argc, char *argv[])
@@ -253,9 +265,9 @@ int main(int argc, char *argv[])
 	data.scoring = score_simple_create();
 	assert(data.scoring);
 
-	assert(scoring_metric_create(data.scoring, "Power consumption", 10));
+	assert(scoring_metric_create(data.scoring, "Power consumption", 20));
 	assert(scoring_metric_create(data.scoring, "RF occupency", 3));
-	assert(scoring_metric_create(data.scoring, "Emission latency", 100));
+	assert(scoring_metric_create(data.scoring, "Emission latency", 5));
 
 	data.decision = decision_simple_create();
 	assert(data.decision );
@@ -268,23 +280,22 @@ int main(int argc, char *argv[])
 						100, 20, 0.1, 0.8);
 	assert(data.m_rgsm);
 
-	flowgraph_t *f = flowgraph_create("nif selector", data.scoring, data.decision,
+	data.f = flowgraph_create("nif selector", data.scoring, data.decision,
 					  decision_callback, &data, 1000000);
-	assert(!flowgraph_attach_prediction(f, data.mp));
-	assert(!flowgraph_attach_prediction(f, data.p_pwr));
-	assert(!flowgraph_attach_prediction(f, data.p_occ));
-	assert(!flowgraph_attach_prediction(f, data.p_lat));
-	assert(!flowgraph_attach_model(f, data.m_rwifi));
-	assert(!flowgraph_attach_model(f, data.m_rgsm));
+	assert(!flowgraph_attach_prediction(data.f, data.mp));
+	assert(!flowgraph_attach_prediction(data.f, data.p_pwr));
+	assert(!flowgraph_attach_prediction(data.f, data.p_occ));
+	assert(!flowgraph_attach_prediction(data.f, data.p_lat));
+	assert(!flowgraph_attach_model(data.f, data.m_rwifi));
+	assert(!flowgraph_attach_model(data.f, data.m_rgsm));
 
 
-	flowgraph_output_csv(f, "pcap_%s_%s_%i.csv", flowgraph_output_csv_cb);
+	flowgraph_output_csv(data.f, "pcap_%s_%s_%i.csv",
+			     flowgraph_output_csv_cb);
 
 	do_work(argc, argv, data.me_pkt, 10000000);
 
-	rtgde_start(f, 1);
-
-	flowgraph_teardown(f);
+	flowgraph_teardown(data.f);
 
 	fclose(data.log_decision);
 

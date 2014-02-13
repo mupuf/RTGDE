@@ -79,6 +79,8 @@ decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *
 		sample_value_t rf_occupancy, card_latency, pwr;
 		float total_energy = 0.0;
 
+		packet_count_interval = packet_count_interval > 0?packet_count_interval:1;
+
 		tx_time = packet_count_interval * s_size->value * 8000000 / msr->bitrate;
 		rx_time -= packet_count_interval * msr->delay_rx_to_tx_us;
 		rx_time -= packet_count_interval * msr->delay_tx_to_rx_us;
