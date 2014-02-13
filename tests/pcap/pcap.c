@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 	assert(!prediction_attach_metric(data.mp, data.me_pkt));
 
 	data.p_pwr = prediction_constraint_create("power", 1000000, 0,
-							  500, 1000, scoring_inverted);
+							  500, 2000, scoring_inverted);
 
 	data.p_occ = prediction_constraint_create("RF-occupancy", 1000000, 0,
 							  50, 100, scoring_inverted);
@@ -272,12 +272,12 @@ int main(int argc, char *argv[])
 	data.decision = decision_simple_create();
 	assert(data.decision );
 
-	data.m_rwifi = model_simple_radio_create("radio-wifi", 10000, 0.001, 0.001,
-						100, 20, 0.1, 0.2);
+	data.m_rwifi = model_simple_radio_create("radio-wifi", 100000, 0.001, 0.001,
+						100, 20, 0.2, 0.3);
 	assert(data.m_rwifi);
 
 	data.m_rgsm = model_simple_radio_create("radio-gsm", 10000, 0.001, 0.001,
-						100, 20, 0.1, 0.8);
+						100, 20, 0.01, 0.8);
 	assert(data.m_rgsm);
 
 	data.f = flowgraph_create("nif selector", data.scoring, data.decision,
