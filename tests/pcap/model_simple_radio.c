@@ -22,20 +22,38 @@ model_simple_radio_t * model_simple_radio(model_t* m)
 decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *input)
 {
 	model_simple_radio_t *msr = model_simple_radio(m);
-	prediction_metric_result_t *psize, *pcount;
+	prediction_metric_result_t *psize, *pcount, *ppower, *pocc, *plat;
 	const sample_t *packet_count, *s_size, *s_size_next;
 	decision_input_metric_t *di_metric_occupancy, *di_metric_latency, *di_metric_pwr;
 	decision_input_model_t *dim;
 
 	psize = prediction_list_find(input, "packetSize");
 	if (!psize) {
-		fprintf(stderr, "model_simple_radio: metric packetSize has not been found!\n");
+		fprintf(stderr, "model_simple_radio: metric 'packetSize'' has not been found!\n");
 		return NULL;
 	}
 
 	pcount = prediction_list_find(input, "packetCount");
 	if (!pcount) {
-		fprintf(stderr, "model_simple_radio: metric packetCount has not been found!\n");
+		fprintf(stderr, "model_simple_radio: metric 'packetCount'' has not been found!\n");
+		return NULL;
+	}
+
+	ppower = prediction_list_find(input, "power");
+	if (!ppower) {
+		fprintf(stderr, "model_simple_radio: metric 'power' constraint has not been found!\n");
+		return NULL;
+	}
+
+	pocc = prediction_list_find(input, "RF-occupancy");
+	if (!pocc) {
+		fprintf(stderr, "model_simple_radio: metric 'RF-occupancy' constraint has not been found!\n");
+		return NULL;
+	}
+
+	plat = prediction_list_find(input, "nif-latency");
+	if (!plat) {
+		fprintf(stderr, "model_simple_radio: metric 'nif_latency'' constraint has not been found!\n");
 		return NULL;
 	}
 
@@ -88,16 +106,23 @@ decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *
 
 		s_size = s_size_next;
 		s_size_next = graph_read_next(psize->average, s_size);
+
+		/* this is the end of the dataset, add the final point with the previous data */
+		if (!s_size_next) {
+			graph_add_point(o_rf_occupancy, s_size->time, rf_occupancy);
+			graph_add_point(o_card_latency, s_size->time, card_latency);
+			graph_add_point(o_pwr, s_size->time, pwr);
+		}
 	}
 
-	di_metric_occupancy = decision_input_metric_create("RF_occupency",
-							   prediction_metric_result_copy(psize),
+	di_metric_occupancy = decision_input_metric_create("RF occupency",
+							   prediction_metric_result_copy(pocc),
 							   o_rf_occupancy);
-	di_metric_latency = decision_input_metric_create("Emission_latency",
-							 prediction_metric_result_copy(psize),
+	di_metric_latency = decision_input_metric_create("Emission latency",
+							 prediction_metric_result_copy(plat),
 							 o_card_latency);
-	di_metric_pwr = decision_input_metric_create("Power_consumption",
-						     prediction_metric_result_copy(psize),
+	di_metric_pwr = decision_input_metric_create("Power consumption",
+						     prediction_metric_result_copy(ppower),
 						     o_pwr);
 	decision_input_model_add_metric(dim, di_metric_occupancy);
 	decision_input_model_add_metric(dim, di_metric_latency);

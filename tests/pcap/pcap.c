@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include <predictions/pred_fsm.h>
+#include <predictions/constraint.h>
 #include "pred_packets.h"
 #include "model_simple_radio.h"
 
@@ -195,10 +196,15 @@ void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 					  const char *csv_filename)
 {
 	char cmd[1024];
+	const char *gnuplot_file = "../gnuplot/metric_overview.plot";
+
+	if (m->prediction->scoring_style == scoring_inverted) {
+		gnuplot_file = "../gnuplot/metric_overview_inverted.plot";
+	}
 
 	snprintf(cmd, sizeof(cmd),
-		 "gnuplot -e \"filename='%s'\" ../gnuplot/metric_overview.plot",
-		 csv_filename);
+		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s'\" %s",
+		 csv_filename, m->name, gnuplot_file);
 	system(cmd);
 
 }
@@ -221,9 +227,29 @@ int main(int argc, char *argv[])
 	assert(me);
 
 	assert(!prediction_attach_metric(mp, me));
-	flowgraph_t *f = flowgraph_create("nif selector", NULL, NULL,
+
+	prediction_t * mpc = prediction_constraint_create("power", 1000000, 0,
+							  500, 1000, scoring_inverted);
+
+	prediction_t * mpo = prediction_constraint_create("RF-occupancy", 1000000, 0,
+							  50, 100, scoring_inverted);
+
+	prediction_t * mpl = prediction_constraint_create("nif-latency", 1000000, 0,
+							  5, 10, scoring_inverted);
+
+	scoring_t * scoring = score_simple_create();
+	assert(scoring);
+
+	assert(scoring_metric_create(scoring, "Power consumption", 10));
+	assert(scoring_metric_create(scoring, "RF occupency", 3));
+	assert(scoring_metric_create(scoring, "Emission latency", 100));
+
+	flowgraph_t *f = flowgraph_create("nif selector", scoring, NULL,
 					  NULL, NULL, 1000000);
 	assert(!flowgraph_attach_prediction(f, mp));
+	assert(!flowgraph_attach_prediction(f, mpc));
+	assert(!flowgraph_attach_prediction(f, mpo));
+	assert(!flowgraph_attach_prediction(f, mpl));
 
 	model_t * m = model_simple_radio_create("radio1", 10000, 0.001, 0.001,
 						100, 20, 0.1, 0.2);
@@ -241,6 +267,11 @@ int main(int argc, char *argv[])
 
 	model_delete(m);
 
+	scoring_delete(scoring);
+
+	prediction_delete(mpl);
+	prediction_delete(mpo);
+	prediction_delete(mpc);
 	prediction_delete(mp);
 
 	metric_delete(me);

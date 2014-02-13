@@ -8,7 +8,7 @@
 #define MIN4(A,B,C,D)   (MIN2(MIN3((A),(B),(C)),(D)))
 
 typedef struct {
-	score_simple_style_t inverted;
+
 } score_simple_t;
 
 float score_simple_calc(scoring_t *s, const prediction_metric_result_t *pmr, const graph_t *model_out)

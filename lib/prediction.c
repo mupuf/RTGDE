@@ -71,6 +71,7 @@ prediction_metric_result_copy(prediction_metric_result_t *pmr)
 
 	INIT_LIST_HEAD(&new_pmr->list);
 	new_pmr->name = strdup(pmr->name);
+	new_pmr->scoring_style = pmr->scoring_style;
 	new_pmr->hsize = pmr->hsize;
 	if (pmr->history) {
 		new_pmr->history = (sample_t *) malloc(pmr->hsize * sizeof(sample_t));

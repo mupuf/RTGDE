@@ -38,25 +38,19 @@ prediction_list_t *prediction_simple_exec(prediction_t *p)
 		r->history = calloc(r->hsize, sizeof(sample_t));
 		r->hsize = metric_dump_history(pos->base, r->history, r->hsize);
 
-		graph_add_point((graph_t *)r->high,
-				0,
+		graph_add_point((graph_t *)r->high, 0,
 				r->history[r->hsize - 1].value);
-		graph_add_point((graph_t *)r->high,
-				simple->prediction_length,
+		graph_add_point((graph_t *)r->high, simple->prediction_length,
 				r->history[r->hsize - 1].value);
 
-		graph_add_point((graph_t *)r->average,
-				0,
+		graph_add_point((graph_t *)r->average, 0,
 				r->history[r->hsize - 1].value);
-		graph_add_point((graph_t *)r->average,
-				simple->prediction_length,
+		graph_add_point((graph_t *)r->average, simple->prediction_length,
 				r->history[r->hsize - 1].value);
 
-		graph_add_point((graph_t *)r->low,
-				0,
+		graph_add_point((graph_t *)r->low, 0,
 				r->history[r->hsize - 1].value);
-		graph_add_point((graph_t *)r->low,
-				simple->prediction_length,
+		graph_add_point((graph_t *)r->low, simple->prediction_length,
 				r->history[r->hsize - 1].value);
 
 		prediction_list_append(pl, r);

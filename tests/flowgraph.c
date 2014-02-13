@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 	assert(!prediction_attach_metric(data.mp, data.me2));
 	assert(!prediction_attach_metric(data.mp, data.me3));
 
-	data.scoring = score_simple_create(scoring_normal);
+	data.scoring = score_simple_create();
 	assert(data.scoring);
 
 	assert(scoring_metric_create(data.scoring, "throughput", 2));

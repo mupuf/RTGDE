@@ -98,12 +98,12 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 			}
 
 			fprintf(f, "Time, %s, %s prediction low, %s prediction average, "
-				"%s prediction high, model '%s' output (score = %.3f)\n",
+				"%s prediction high, model '%s' %s (score = %.3f)\n",
 				m->prediction->name,
 				m->prediction->name,
 				m->prediction->name,
 				m->prediction->name,
-				model_name(m->parent->model),
+				model_name(m->parent->model), m->name,
 				m->score);
 
 			/* dump the history */

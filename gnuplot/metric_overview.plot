@@ -12,7 +12,7 @@ set style line 12 lc rgb '#606060' lt 0 lw 1
 set grid back ls 12
 
 set style fill pattern 6
-set title "Prediction Throughput"
+set title graph_title
 
 set key below
 set xlabel "Time (µs)"
