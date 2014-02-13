@@ -73,6 +73,19 @@ decision_input_model_t *decision_input_model_get_next(decision_input_model_t *di
 		return list_entry(dim->list.next, decision_input_model_t, list);
 }
 
+decision_input_model_t *decision_input_model_get_by_name(decision_input_t *di,
+							 const char *name)
+{
+	decision_input_model_t *dim = decision_input_model_get_first(di);
+	while (dim) {
+		if (strcmp(model_name(dim->model), name) == 0)
+			return dim;
+		dim = decision_input_model_get_next(dim);
+	}
+
+	return NULL;
+}
+
 void decision_input_model_add_metric(decision_input_model_t *dim,
 				     decision_input_metric_t *di_metric)
 {

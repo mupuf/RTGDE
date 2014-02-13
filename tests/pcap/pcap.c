@@ -4,9 +4,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include <predictions/pred_fsm.h>
 #include <predictions/constraint.h>
+#include <scoring/simple.h>
+#include <decision/simple.h>
 #include "pred_packets.h"
 #include "model_simple_radio.h"
 
@@ -161,37 +164,6 @@ void do_work(int argc, char *argv[], metric_t * me, int64_t timeout_us)
 		usage(argc, argv);
 }
 
-struct fsm_pred_throuput_state {
-	fsm_state_t *fsm_st;
-	int power;
-};
-
-struct fsm_pred_throuput {
-	struct fsm_pred_throuput_state on;
-	struct fsm_pred_throuput_state off;
-	fsm_state_t *cur;
-} fsm_pred_data;
-
-fsm_state_t *fsm_pred_throuput_next_state(fsm_t *fsm, const char *metric, sample_value_t value)
-{
-	if (value > 0)
-		return fsm_pred_data.on.fsm_st;
-	else
-		return fsm_pred_data.off.fsm_st;
-}
-
-int fsm_pred_throuput_metric_from_state(fsm_state_t *state,
-					const char *metric_name,
-					sample_value_t *value)
-{
-	struct fsm_pred_throuput_state *st = fsm_state_get_user(state);
-	if (strcmp(metric_name, "throughput") == 0) {
-		*value = st->power;
-		return 0;
-	} else
-		return 1;
-}
-
 void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 					  const char *csv_filename)
 {
@@ -209,72 +181,124 @@ void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 
 }
 
+struct flowgraph_data {
+	prediction_t * mp;
+	metric_t * me_pkt;
+	prediction_t * p_pwr;
+	prediction_t * p_occ;
+	prediction_t * p_lat;
+	model_t * m_rwifi;
+	model_t * m_rgsm;
+	scoring_t * scoring;
+	decision_t * decision;
+	flowgraph_t *f;
+
+	FILE *log_decision;
+} data;
+
+void decision_callback(flowgraph_t *f, decision_input_t *di,
+		       decision_input_model_t *dim, void *user)
+{
+	//struct flowgraph_data *d = (struct flowgraph_data*) user;
+	decision_input_model_t *wifi, *gsm;
+
+	if (!dim) {
+		fprintf(stderr, "Callback decision: no decision has been made!\n");
+		return;
+	}
+
+	wifi = decision_input_model_get_by_name(di, "radio-wifi");
+	if (!wifi) {
+		fprintf(stderr, "wifi model not found!\n");
+		return;
+	}
+
+	gsm = decision_input_model_get_by_name(di, "radio-gsm");
+	if (!gsm) {
+		fprintf(stderr, "gsm model not found!\n");
+		return;
+	}
+
+	fprintf(data.log_decision, "%" PRIu64 ", %f, %f, %f, %f\n", relative_time_us(),
+		wifi->score, gsm->score,
+		wifi==dim?wifi->score:0, gsm==dim?gsm->score:0);
+}
+
 int main(int argc, char *argv[])
 {
-	fsm_t *pred_fsm = fsm_create(fsm_pred_throuput_next_state, NULL, &fsm_pred_data);
-	fsm_pred_data.on.fsm_st = fsm_add_state(pred_fsm, "ON", &fsm_pred_data.on);
-	fsm_pred_data.off.fsm_st = fsm_add_state(pred_fsm, "OFF", &fsm_pred_data.off);
-	fsm_pred_data.cur = fsm_pred_data.off.fsm_st;
+	data.log_decision = fopen("pcap_decision_log.csv", "w");
+	if (!data.log_decision)  {
+		perror("cannot open 'pcap_decision_log.csv'");
+		return 0;
+	}
+	fprintf(data.log_decision, "time (µs), wifi model score, gsm model score, wifi selected, gsm selected\n");
 
-	/*prediction_t * mp = prediction_fsm_create(pred_fsm,
-						  fsm_pred_throuput_metric_from_state,
-						  250000, 10);
-	assert(mp);*/
-	prediction_t * mp = pred_packets_create(1000000, 2);
-	assert(mp);
+	data.mp = pred_packets_create(1000000, 2);
+	assert(data.mp);
 
-	metric_t * me = metric_create("packets", 1000);
-	assert(me);
+	data.me_pkt = metric_create("packets", 1000);
+	assert(data.me_pkt);
 
-	assert(!prediction_attach_metric(mp, me));
+	assert(!prediction_attach_metric(data.mp, data.me_pkt));
 
-	prediction_t * mpc = prediction_constraint_create("power", 1000000, 0,
+	data.p_pwr = prediction_constraint_create("power", 1000000, 0,
 							  500, 1000, scoring_inverted);
 
-	prediction_t * mpo = prediction_constraint_create("RF-occupancy", 1000000, 0,
+	data.p_occ = prediction_constraint_create("RF-occupancy", 1000000, 0,
 							  50, 100, scoring_inverted);
 
-	prediction_t * mpl = prediction_constraint_create("nif-latency", 1000000, 0,
+	data.p_lat = prediction_constraint_create("nif-latency", 1000000, 0,
 							  5, 10, scoring_inverted);
 
-	scoring_t * scoring = score_simple_create();
-	assert(scoring);
+	data.scoring = score_simple_create();
+	assert(data.scoring);
 
-	assert(scoring_metric_create(scoring, "Power consumption", 10));
-	assert(scoring_metric_create(scoring, "RF occupency", 3));
-	assert(scoring_metric_create(scoring, "Emission latency", 100));
+	assert(scoring_metric_create(data.scoring, "Power consumption", 10));
+	assert(scoring_metric_create(data.scoring, "RF occupency", 3));
+	assert(scoring_metric_create(data.scoring, "Emission latency", 100));
 
-	flowgraph_t *f = flowgraph_create("nif selector", scoring, NULL,
-					  NULL, NULL, 1000000);
-	assert(!flowgraph_attach_prediction(f, mp));
-	assert(!flowgraph_attach_prediction(f, mpc));
-	assert(!flowgraph_attach_prediction(f, mpo));
-	assert(!flowgraph_attach_prediction(f, mpl));
+	data.decision = decision_simple_create();
+	assert(data.decision );
 
-	model_t * m = model_simple_radio_create("radio1", 10000, 0.001, 0.001,
+	data.m_rwifi = model_simple_radio_create("radio-wifi", 10000, 0.001, 0.001,
 						100, 20, 0.1, 0.2);
-	assert(m);
+	assert(data.m_rwifi);
 
-	assert(!flowgraph_attach_model(f, m));
+	data.m_rgsm = model_simple_radio_create("radio-gsm", 10000, 0.001, 0.001,
+						100, 20, 0.1, 0.8);
+	assert(data.m_rgsm);
+
+	flowgraph_t *f = flowgraph_create("nif selector", data.scoring, data.decision,
+					  decision_callback, &data, 1000000);
+	assert(!flowgraph_attach_prediction(f, data.mp));
+	assert(!flowgraph_attach_prediction(f, data.p_pwr));
+	assert(!flowgraph_attach_prediction(f, data.p_occ));
+	assert(!flowgraph_attach_prediction(f, data.p_lat));
+	assert(!flowgraph_attach_model(f, data.m_rwifi));
+	assert(!flowgraph_attach_model(f, data.m_rgsm));
+
 
 	flowgraph_output_csv(f, "pcap_%s_%s_%i.csv", flowgraph_output_csv_cb);
 
-	do_work(argc, argv, me, 10000000);
+	do_work(argc, argv, data.me_pkt, 10000000);
 
 	rtgde_start(f, 1);
 
 	flowgraph_teardown(f);
 
-	model_delete(m);
+	fclose(data.log_decision);
 
-	scoring_delete(scoring);
+	decision_delete(data.decision);
+	model_delete(data.m_rgsm);
+	model_delete(data.m_rwifi);
+	scoring_delete(data.scoring);
 
-	prediction_delete(mpl);
-	prediction_delete(mpo);
-	prediction_delete(mpc);
-	prediction_delete(mp);
+	prediction_delete(data.p_lat);
+	prediction_delete(data.p_occ);
+	prediction_delete(data.p_pwr);
+	prediction_delete(data.mp);
 
-	metric_delete(me);
+	metric_delete(data.me_pkt);
 
 	return 0;
 }

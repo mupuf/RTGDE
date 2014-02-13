@@ -42,6 +42,7 @@ decision_input_metric_t * decision_input_metric_create(const char *name,
 void decision_input_add_model(decision_input_t *di, decision_input_model_t *dim);
 decision_input_model_t *decision_input_model_get_first(decision_input_t *di);
 decision_input_model_t *decision_input_model_get_next(decision_input_model_t *dim);
+decision_input_model_t *decision_input_model_get_by_name(decision_input_t *di, const char *name);
 void decision_input_model_add_metric(decision_input_model_t *dim,
 				     decision_input_metric_t *di_metric);
 decision_input_metric_t *decision_input_metric_from_name(decision_input_model_t *dim,
