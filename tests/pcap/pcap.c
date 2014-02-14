@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
 	assert(!flowgraph_attach_model(data.f, data.m_rwifi));
 	assert(!flowgraph_attach_model(data.f, data.m_rgsm));
 
-	flowgraph_prediction_output_csv(data.f, "pcap_pred_%s_%s_%i.csv",
+	flowgraph_prediction_output_csv(data.f, "pcap_%s_%s_%i.csv",
 					flowgraph_prediction_output_csv_cb);
 	flowgraph_model_output_csv(data.f, "pcap_model_%s_%s_%i.csv",
 			     flowgraph_model_csv_cb);
