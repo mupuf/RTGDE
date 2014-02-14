@@ -13,6 +13,8 @@
 #include "pred_packets.h"
 #include "model_simple_radio.h"
 
+#define DECISION_LOG_FILE "pcap_decision_log.csv"
+
 struct flowgraph_data {
 	prediction_t * mp;
 	metric_t * me_pkt;
@@ -131,7 +133,6 @@ int pcap_read_packet_header(FILE *file, struct pcap_packet *pkt)
 	return 0;
 }
 
-#include <sched.h>
 void read_from_file(metric_t * me, const char *filepath)
 {
 	struct pcap_packet pkt;
@@ -189,14 +190,29 @@ void do_work(int argc, char *argv[], metric_t * me, int64_t timeout_us)
 		usage(argc, argv);
 }
 
-void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
+void flowgraph_prediction_output_csv_cb(flowgraph_t *f,
+					  prediction_t *p,
+					  prediction_metric_result_t *pmr,
 					  const char *csv_filename)
 {
 	char cmd[1024];
-	const char *gnuplot_file = "../gnuplot/metric_overview.plot";
+	const char *gnuplot_file = "../gnuplot/prediction.plot";
+
+	snprintf(cmd, sizeof(cmd),
+		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s %s'\" %s",
+		 csv_filename, pmr_usage_hint_to_str(pmr->usage_hint),
+		 pmr->name, gnuplot_file);
+	system(cmd);
+}
+
+void flowgraph_model_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
+					  const char *csv_filename)
+{
+	char cmd[1024];
+	const char *gnuplot_file = "../gnuplot/model_output_scored.plot";
 
 	if (m->prediction->scoring_style == scoring_inverted) {
-		gnuplot_file = "../gnuplot/metric_overview_inverted.plot";
+		gnuplot_file = "../gnuplot/model_output_scored_inverted.plot";
 	}
 
 	snprintf(cmd, sizeof(cmd),
@@ -236,9 +252,17 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 	fsync(fileno(data.log_decision));
 }
 
+void generate_models_score()
+{
+	system("gnuplot -e \"filename='"DECISION_LOG_FILE"'\" -e "
+	       "\"graph_title='Evolution of the score of the WiFi and GSM models'\""
+	       "../gnuplot/decision_log.plot");
+
+}
+
 int main(int argc, char *argv[])
 {
-	data.log_decision = fopen("pcap_decision_log.csv", "w");
+	data.log_decision = fopen(DECISION_LOG_FILE, "w");
 	if (!data.log_decision)  {
 		perror("cannot open 'pcap_decision_log.csv'");
 		return 0;
@@ -289,9 +313,10 @@ int main(int argc, char *argv[])
 	assert(!flowgraph_attach_model(data.f, data.m_rwifi));
 	assert(!flowgraph_attach_model(data.f, data.m_rgsm));
 
-
-	flowgraph_output_csv(data.f, "pcap_%s_%s_%i.csv",
-			     flowgraph_output_csv_cb);
+	flowgraph_prediction_output_csv(data.f, "pcap_pred_%s_%s_%i.csv",
+					flowgraph_prediction_output_csv_cb);
+	flowgraph_model_output_csv(data.f, "pcap_model_%s_%s_%i.csv",
+			     flowgraph_model_csv_cb);
 
 	do_work(argc, argv, data.me_pkt, 10000000);
 
@@ -310,6 +335,8 @@ int main(int argc, char *argv[])
 	prediction_delete(data.mp);
 
 	metric_delete(data.me_pkt);
+
+	generate_models_score();
 
 	return 0;
 }

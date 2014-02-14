@@ -29,6 +29,7 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name,
 	pmr->name = strdup(name);
 	pmr->scoring_style = scoring_style;
 	pmr->usage_hint = pmr_usage_prediction;
+	pmr->metric = NULL;
 	pmr->hsize = 0;
 	pmr->history = NULL;
 	pmr->high = graph_create();
@@ -128,6 +129,24 @@ prediction_list_find(prediction_list_t *pl, const char *metric_name)
 	}
 
 	return NULL;
+}
+
+prediction_metric_result_t * prediction_list_get_first(prediction_list_t *input)
+{
+	if (list_empty(input))
+		return NULL;
+	else
+		return list_entry(input->next, prediction_metric_result_t, list);
+}
+
+prediction_metric_result_t * prediction_list_get_next(prediction_list_t *input,
+						  prediction_metric_result_t *pmr)
+{
+	struct list_head * next = pmr->list.next;
+	if (next == input)
+		return NULL;
+	else
+		return list_entry(next, prediction_metric_result_t, list);
 }
 
 prediction_metric_result_t *

@@ -31,8 +31,10 @@ metric_t * metric_create(const char *name, history_size_t history_size)
 
 const char *metric_name(metric_t* m)
 {
-	metric_priv_t *m_priv = metric_priv(m);
-	return m_priv->name;
+	if (m)
+		return metric_priv(m)->name;
+	else
+		return NULL;
 }
 
 static history_size_t rb_next_index(history_size_t index, history_size_t history_size)

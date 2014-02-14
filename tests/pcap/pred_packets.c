@@ -50,6 +50,7 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 	}
 
 	/* read the history of the metric */
+	r_size->metric = packets_m;
 	r_size->hsize = metric_history_size(packets_m);
 	r_size->history = calloc(r_size->hsize, sizeof(sample_t));
 	r_size->hsize = metric_dump_history(packets_m, r_size->history, r_size->hsize);

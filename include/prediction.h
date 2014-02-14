@@ -32,6 +32,7 @@ typedef struct {
 	pmr_usage_hint_t usage_hint;
 
 	/* input */
+	metric_t *metric;
 	history_size_t hsize;
 	sample_t *history;
 
@@ -51,6 +52,8 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name, sc
 prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr);
 int prediction_list_append_list_copy(prediction_list_t *po, const prediction_list_t *npl);
 prediction_metric_result_t * prediction_list_find(prediction_list_t *input, const char *metric_name);
+prediction_metric_result_t * prediction_list_get_first(prediction_list_t *input);
+prediction_metric_result_t * prediction_list_get_next(prediction_list_t *input, prediction_metric_result_t *pmr);
 prediction_metric_result_t * prediction_list_extract_by_name(prediction_list_t *input, const char *metric_name);
 prediction_metric_result_t * prediction_list_extract_head(prediction_list_t *input);
 void prediction_metric_result_delete(prediction_metric_result_t *pmr);

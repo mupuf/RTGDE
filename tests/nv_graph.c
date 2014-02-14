@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
 	assert(!flowgraph_attach_model(f, m));
 
-	flowgraph_output_csv(f, "pred_graph_idle_%s_%s_%i.csv", NULL);
+	flowgraph_model_output_csv(f, "pred_graph_idle_%s_%s_%i.csv", NULL);
 
 	do_work(argc, argv, f, me);
 

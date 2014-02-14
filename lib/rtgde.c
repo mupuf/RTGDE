@@ -52,8 +52,9 @@ typedef struct {
 	void *user_cb_data;
 
 	/* CSV output */
-	char * csv_filename_format;
-	flowgraph_output_csv_cb_t output_cb;
+	char * csv_pred_format, *csv_model_format;
+	flowgraph_prediction_output_csv_cb_t csv_pred_cb;
+	flowgraph_model_output_csv_cb_t csv_model_cb;
 	uint64_t flowgraph_exec_count;
 } flowgraph_priv_t;
 
@@ -71,12 +72,96 @@ int64_t clock_read_us()
 	return tp.tv_sec * 1000000ULL + tp.tv_nsec / 1000;
 }
 
-static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
+static void csv_log_pred(flowgraph_priv_t *f_priv)
+{
+	prediction_metric_result_t *pmr;
+	flowgraph_prediction_t *pos_p;
+
+	if (!f_priv->csv_pred_format)
+		return;
+
+	list_for_each_entry(pos_p, &f_priv->predictions, list) {
+
+		pmr = prediction_list_get_first(pos_p->last_prediction);
+		while (pmr) {
+			int64_t last_sample_time = 0;
+			char filename[PATH_MAX];
+			int have_metric = pmr->metric && pmr->hsize > 0;
+			int i;
+
+			snprintf(filename, sizeof(filename), f_priv->csv_pred_format,
+				 prediction_name(pos_p->base), pmr->name,
+				 f_priv->flowgraph_exec_count);
+
+			FILE *f = fopen(filename, "w");
+			if (!f) {
+				perror("rtgde csv output, fopen");
+				continue;
+			}
+
+			if (have_metric) {
+				fprintf(f, "Time (µs), %s, %s prediction low, "
+					"%s prediction average, %s prediction high\n",
+					metric_name(pmr->metric), pmr->name, pmr->name,
+					pmr->name);
+
+				/* dump the history */
+				last_sample_time = pmr->history[pmr->hsize - 1].time;
+				for (i = 0; i < pmr->hsize; i++) {
+					if (i > 0)
+						fprintf(f, "%" PRIi64 ", %i, , , ,\n",
+							pmr->history[i].time - 1 - last_sample_time,
+							pmr->history[i - 1].value);
+					fprintf(f, "%" PRIi64 ", %i, , , ,\n",
+						pmr->history[i].time - last_sample_time,
+						pmr->history[i].value);
+				}
+				last_sample_time++;
+			} else {
+				fprintf(f, "Time (µs), %s %s-low, "
+					"%s %s-average, %s %s-high\n",
+					pmr->name, pmr_usage_hint_to_str(pmr->usage_hint),
+					pmr->name, pmr_usage_hint_to_str(pmr->usage_hint),
+					pmr->name, pmr_usage_hint_to_str(pmr->usage_hint));
+
+				last_sample_time = 0;
+			}
+
+			/* dump the predicted values + model output */
+			const sample_t *s_low = graph_read_first(pmr->low);
+			const sample_t *s_avg = graph_read_first(pmr->average);
+			const sample_t *s_high = graph_read_first(pmr->high);
+
+			assert(s_low->time == 0);
+			assert(s_avg->time == 0);
+			assert(s_high->time == 0);
+
+			while (s_low && s_avg && s_high) {
+				fprintf(f, "%" PRIu64 ", %s%i, %i, %i\n",
+					s_low->time, have_metric?", ":"",
+					s_low->value, s_avg->value, s_high->value);
+
+				s_low = graph_read_next(pmr->low, s_low);
+				s_avg = graph_read_next(pmr->average, s_avg);
+				s_high = graph_read_next(pmr->high, s_high);
+			}
+
+			fclose(f);
+
+			if (f_priv->csv_pred_cb)
+				f_priv->csv_pred_cb((flowgraph_t *)f_priv,
+						    pos_p->base, pmr, filename);
+			pmr = prediction_list_get_next(pos_p->last_prediction, pmr);
+		}
+	}
+}
+
+static void csv_log_models(flowgraph_priv_t *f_priv, decision_input_t *di)
 {
 	decision_input_model_t *dim;
 	decision_input_metric_t* m;
 
-	if (!f_priv->csv_filename_format)
+	if (!f_priv->csv_model_format)
 		return;
 
 	dim = decision_input_model_get_first(di);
@@ -87,7 +172,7 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 			char filename[PATH_MAX];
 			int i;
 
-			snprintf(filename, sizeof(filename), f_priv->csv_filename_format,
+			snprintf(filename, sizeof(filename), f_priv->csv_model_format,
 				 model_name(dim->model), m->name,
 				 f_priv->flowgraph_exec_count);
 
@@ -175,8 +260,8 @@ static void log_to_file(flowgraph_priv_t *f_priv, decision_input_t *di)
 
 			fclose(f);
 
-			if (f_priv->output_cb)
-				f_priv->output_cb((flowgraph_t *)f_priv, m, filename);
+			if (f_priv->csv_model_cb)
+				f_priv->csv_model_cb((flowgraph_t *)f_priv, m, filename);
 
 			m = decision_input_metric_get_next(m);
 		}
@@ -231,7 +316,8 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 		f_priv->user_cb((flowgraph_t*)f_priv, di, dim_sel, f_priv->user_cb_data);
 
 	/* write a nice report to the disc */
-	log_to_file(f_priv, di);
+	csv_log_pred(f_priv);
+	csv_log_models(f_priv, di);
 
 	/* free all the ressources */
 	decision_input_delete(di);
@@ -303,7 +389,7 @@ flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 	f_priv->user_cb_data = user_cb_data;
 	f_priv->name = strdup(name);
 
-	f_priv->csv_filename_format = NULL;
+	f_priv->csv_model_format = NULL;
 	f_priv->flowgraph_exec_count = 0;
 
 	return (flowgraph_t *)f_priv;
@@ -406,16 +492,32 @@ exit:
 	return ret;
 }
 
-void flowgraph_output_csv(flowgraph_t *f, const char *csv_filename_format,
-			  flowgraph_output_csv_cb_t output_cb)
+void flowgraph_prediction_output_csv(flowgraph_t *f, const char *csv_filename_format,
+			  flowgraph_prediction_output_csv_cb_t output_cb)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 
-	if (f_priv->csv_filename_format)
-		free(f_priv->csv_filename_format);
+	if (f_priv->csv_pred_cb)
+		free(f_priv->csv_pred_cb);
+	if (f_priv->csv_pred_format)
+		free(f_priv->csv_pred_format);
 
-	f_priv->output_cb = output_cb;
-	f_priv->csv_filename_format = strdup(csv_filename_format);
+	f_priv->csv_pred_cb = output_cb;
+	f_priv->csv_pred_format = strdup(csv_filename_format);
+}
+
+void flowgraph_model_output_csv(flowgraph_t *f, const char *csv_filename_format,
+			  flowgraph_model_output_csv_cb_t output_cb)
+{
+	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+
+	if (f_priv->csv_model_format)
+		free(f_priv->csv_model_format);
+	if (f_priv->csv_model_format)
+		free(f_priv->csv_model_format);
+
+	f_priv->csv_model_cb = output_cb;
+	f_priv->csv_model_format = strdup(csv_filename_format);
 }
 
 int rtgde_start(flowgraph_t *f, int one_time)
@@ -470,8 +572,8 @@ void flowgraph_teardown(flowgraph_t *f)
 	}
 
 	free(f_priv->name);
-	if (f_priv->csv_filename_format)
-		free(f_priv->csv_filename_format);
+	if (f_priv->csv_model_format)
+		free(f_priv->csv_model_format);
 	free(f);
 
 	/* never free the mutex to spot the use-after-free in some cases */

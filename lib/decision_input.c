@@ -70,7 +70,7 @@ decision_input_model_t *decision_input_model_get_next(decision_input_model_t *di
 	if (next == &dim->parent->models)
 		return NULL;
 	else
-		return list_entry(dim->list.next, decision_input_model_t, list);
+		return list_entry(next, decision_input_model_t, list);
 }
 
 decision_input_model_t *decision_input_model_get_by_name(decision_input_t *di,

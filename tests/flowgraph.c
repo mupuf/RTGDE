@@ -43,7 +43,7 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 		dim->model, dim->score);
 }
 
-void flowgraph_output_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
+void flowgraph_model_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 					  const char *csv_filename)
 {
 	char cmd[1024];
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 
 	assert(!flowgraph_attach_model(data.f, data.m));
 
-	flowgraph_output_csv(data.f, "model_%s_metric_%s_%i.csv", flowgraph_output_csv_cb);
+	flowgraph_model_output_csv(data.f, "model_%s_metric_%s_%i.csv", flowgraph_model_csv_cb);
 
 	rtgde_start(data.f, 0);
 

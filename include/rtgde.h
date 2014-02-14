@@ -18,7 +18,12 @@ typedef struct {
 typedef void (*flowgraph_callback_t)(flowgraph_t *f, decision_input_t *di,
 				     decision_input_model_t *dim, void *user);
 
-typedef void (*flowgraph_output_csv_cb_t)(flowgraph_t *f,
+typedef void (*flowgraph_prediction_output_csv_cb_t)(flowgraph_t *f,
+					  prediction_t *p,
+					  prediction_metric_result_t *pmr,
+					  const char *csv_filename);
+
+typedef void (*flowgraph_model_output_csv_cb_t)(flowgraph_t *f,
 					  decision_input_metric_t* m,
 					  const char *csv_filename);
 
@@ -37,12 +42,19 @@ int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p);
 int flowgraph_attach_model(flowgraph_t *f, model_t * m);
 int flowgraph_detach_model(flowgraph_t *f, model_t * m);
 
+/* csv_filename_format have to have 2 parameters, the first is the prediction's
+ * name (%s), then the metrics' name (%s) and the last is the number of time a
+ * prediction has been made (%i),
+ */
+void flowgraph_prediction_output_csv(flowgraph_t *f, const char *csv_filename_format,
+			  flowgraph_prediction_output_csv_cb_t output_cb);
+
 /* csv_filename_format have to have 2 parameters, the first is the model's
  * name (%s), then the metrics' name (%s) and the last is the number of time a
  * decision has been made (%i),
  */
-void flowgraph_output_csv(flowgraph_t *f, const char *csv_filename_format,
-			  flowgraph_output_csv_cb_t output_cb);
+void flowgraph_model_output_csv(flowgraph_t *f, const char *csv_filename_format,
+			  flowgraph_model_output_csv_cb_t output_cb);
 
 int rtgde_start(flowgraph_t *f, int one_time);
 int rtgde_stop(flowgraph_t *f);
