@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 	assert(mp);
 	prediction_fsm_dump_probability_density(mp, "fsm_pred_pgraph");
 
-	metric_t * me = metric_create("pgraph usage", 1000000);
+	metric_t * me = metric_create("pgraph usage", "on or off", 1000000);
 	assert(me);
 
 	assert(!prediction_attach_metric(mp, me));

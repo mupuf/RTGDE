@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 prediction_t * prediction_constraint_create(const char *constraint_name,
+					    const char *unit,
 					    sample_time_t prediction_length,
 					    sample_value_t low,
 					    sample_value_t avg,

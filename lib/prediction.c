@@ -19,6 +19,7 @@ const char *pmr_usage_hint_to_str(pmr_usage_hint_t hint)
 }
 
 prediction_metric_result_t *prediction_metric_result_create(const char *name,
+							    const char *unit,
 						score_simple_style_t scoring_style)
 {
 	prediction_metric_result_t *pmr = malloc(sizeof(prediction_metric_result_t));
@@ -27,6 +28,7 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name,
 
 	INIT_LIST_HEAD(&pmr->list);
 	pmr->name = strdup(name);
+	pmr->unit = strdup(unit);
 	pmr->scoring_style = scoring_style;
 	pmr->usage_hint = pmr_usage_prediction;
 	pmr->metric = NULL;
@@ -52,7 +54,10 @@ void prediction_metric_result_delete(prediction_metric_result_t *pmr)
 			pmr);
 	}
 
-	free((char *)pmr->name);
+	if (pmr->name)
+		free((char *)pmr->name);
+	if (pmr->unit)
+		free((char *)pmr->unit);
 	if (pmr->history)
 		free(pmr->history);
 	graph_delete((graph_t *)pmr->high);
@@ -74,6 +79,7 @@ prediction_metric_result_copy(prediction_metric_result_t *pmr)
 
 	INIT_LIST_HEAD(&new_pmr->list);
 	new_pmr->name = strdup(pmr->name);
+	new_pmr->unit = strdup(pmr->unit);
 	new_pmr->scoring_style = pmr->scoring_style;
 	new_pmr->hsize = pmr->hsize;
 	if (pmr->history) {

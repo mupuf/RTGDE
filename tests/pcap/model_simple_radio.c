@@ -21,7 +21,6 @@ model_simple_radio_t * model_simple_radio(model_t* m)
 
 decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *input)
 {
-	static int count = 0;
 	model_simple_radio_t *msr = model_simple_radio(m);
 	prediction_metric_result_t *psize, *pcount, *ppower, *pocc, *plat;
 	const sample_t *packet_count, *s_size, *s_size_next;

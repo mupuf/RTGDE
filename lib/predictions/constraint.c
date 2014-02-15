@@ -5,6 +5,7 @@
 typedef struct {
 	sample_time_t prediction_length;
 	char *constraint_name;
+	char *unit;
 	sample_value_t low;
 	sample_value_t avg;
 	sample_value_t high;
@@ -31,6 +32,7 @@ prediction_list_t *prediction_constraint_exec(prediction_t *p)
 		return NULL;
 
 	r = prediction_metric_result_create(constraint->constraint_name,
+					    constraint->unit,
 					    constraint->scoring_style);
 
 	r->usage_hint = pmr_usage_constraint;
@@ -56,10 +58,12 @@ void prediction_constraint_dtor(prediction_t *p)
 {
 	prediction_constraint_t * constraint = prediction_constraint(p);
 	free(constraint->constraint_name);
+	free(constraint->unit);
 	free(constraint);
 }
 
 prediction_t * prediction_constraint_create(const char *constraint_name,
+					    const char *unit,
 					    sample_time_t prediction_length,
 					    sample_value_t low,
 					    sample_value_t avg,
@@ -72,6 +76,7 @@ prediction_t * prediction_constraint_create(const char *constraint_name,
 
 	constraint->prediction_length = prediction_length;
 	constraint->constraint_name = strdup(constraint_name);
+	constraint->unit = strdup(unit);
 	constraint->low = low;
 	constraint->avg = avg;
 	constraint->high = high;

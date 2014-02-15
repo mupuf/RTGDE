@@ -9,6 +9,7 @@ typedef struct {
 	metric_t base;
 
 	const char *name;
+	const char *unit;
 
 	/* history */
 	pthread_mutex_t history_mutex;

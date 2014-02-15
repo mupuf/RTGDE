@@ -28,6 +28,7 @@ typedef struct {
 	struct list_head list;
 
 	const char *name;
+	const char *unit;
 	score_simple_style_t scoring_style;
 	pmr_usage_hint_t usage_hint;
 
@@ -50,7 +51,7 @@ typedef struct list_head prediction_list_t;
 const char *pmr_usage_hint_to_str(pmr_usage_hint_t hint);
 
 prediction_list_t * prediction_list_create();
-prediction_metric_result_t *prediction_metric_result_create(const char *name, score_simple_style_t scoring_style);
+prediction_metric_result_t *prediction_metric_result_create(const char *name, const char *unit, score_simple_style_t scoring_style);
 prediction_metric_result_t *prediction_metric_result_copy(prediction_metric_result_t *pmr);
 int prediction_list_append_list_copy(prediction_list_t *po, const prediction_list_t *npl);
 prediction_metric_result_t * prediction_list_find(prediction_list_t *input, const char *metric_name);

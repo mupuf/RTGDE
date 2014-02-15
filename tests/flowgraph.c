@@ -62,11 +62,11 @@ int main(int argc, char **argv)
 	data.mp = prediction_average_create(1000000, 2);
 	assert(data.mp);
 
-	data.me1 = metric_create("throughput", 10);
+	data.me1 = metric_create("throughput", "bit/s", 10);
 	assert(data.me1);
-	data.me2 = metric_create("latency", 10);
+	data.me2 = metric_create("latency", "ms", 10);
 	assert(data.me2);
-	data.me3 = metric_create("lol", 10);
+	data.me3 = metric_create("lol", "toto", 10);
 	assert(data.me3);
 
 	assert(!prediction_attach_metric(data.mp, data.me1));

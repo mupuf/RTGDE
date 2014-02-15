@@ -9,7 +9,7 @@ static metric_priv_t * metric_priv(metric_t* m)
 	return (metric_priv_t *)m;
 }
 
-metric_t * metric_create(const char *name, history_size_t history_size)
+metric_t * metric_create(const char *name, const char *unit, history_size_t history_size)
 {
 	metric_priv_t *m_priv = malloc(sizeof(metric_priv_t));
 
@@ -17,6 +17,7 @@ metric_t * metric_create(const char *name, history_size_t history_size)
 		return NULL;
 
 	m_priv->name = strdup(name);
+	m_priv->unit = strdup(unit);
 
 	/* history */
 	pthread_mutex_init(&m_priv->history_mutex, NULL);
@@ -33,6 +34,14 @@ const char *metric_name(metric_t* m)
 {
 	if (m)
 		return metric_priv(m)->name;
+	else
+		return NULL;
+}
+
+const char *metric_unit(metric_t* m)
+{
+	if (m)
+		return metric_priv(m)->unit;
 	else
 		return NULL;
 }
@@ -156,6 +165,7 @@ void metric_delete(metric_t *m)
 {
 	metric_priv_t *m_priv = metric_priv(m);
 	free((char *)m_priv->name);
+	free((char*)m_priv->unit);
 	free(m_priv->ring);
 	free(m_priv);
 }

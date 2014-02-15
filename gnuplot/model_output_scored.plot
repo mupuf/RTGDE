@@ -16,7 +16,7 @@ set title graph_title
 
 set key below
 set xlabel "Time (µs)"
-set ylabel "Metric value"
+set ylabel prediction
 # TODO: Add units to metrics
 
 plot filename u 1:6:5 lt rgb "yellow" title "decision impact" w filledcu below, \

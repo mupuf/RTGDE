@@ -197,11 +197,19 @@ void flowgraph_prediction_output_csv_cb(flowgraph_t *f,
 {
 	char cmd[1024];
 	const char *gnuplot_file = "../gnuplot/prediction.plot";
+	const char *m_name = metric_name(pmr->metric), *m_unit = metric_unit(pmr->metric);
+
+	if (!m_name)
+		m_name = "No input metric associated";
+	if (!m_unit)
+		m_unit = "no unit";
 
 	snprintf(cmd, sizeof(cmd),
-		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s %s'\" %s  2> /dev/null > /dev/null",
+		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s %s'\""
+		 " -e \"metric='%s (%s)'\" -e \"prediction='predicted %s (%s)'\""
+		 " %s 2> /dev/null > /dev/null",
 		 csv_filename, pmr_usage_hint_to_str(pmr->usage_hint),
-		 pmr->name, gnuplot_file);
+		 pmr->name, m_name, m_unit, pmr->name, pmr->unit, gnuplot_file);
 	system(cmd);
 }
 
@@ -216,8 +224,10 @@ void flowgraph_model_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 	}
 
 	snprintf(cmd, sizeof(cmd),
-		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s'\" %s 2> /dev/null > /dev/null",
-		 csv_filename, m->name, gnuplot_file);
+		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s'\""
+		 " -e \"prediction='%s (%s)'\" %s 2> /dev/null > /dev/null",
+		 csv_filename, m->name, m->prediction->name,
+		 m->prediction->unit, gnuplot_file);
 	system(cmd);
 }
 
@@ -273,18 +283,18 @@ int main(int argc, char *argv[])
 	data.mp = pred_packets_create(1000000, 2);
 	assert(data.mp);
 
-	data.me_pkt = metric_create("packets", 1000);
+	data.me_pkt = metric_create("packets", "bytes", 1000);
 	assert(data.me_pkt);
 
 	assert(!prediction_attach_metric(data.mp, data.me_pkt));
 
-	data.p_pwr = prediction_constraint_create("power", 1000000, 0,
+	data.p_pwr = prediction_constraint_create("power", "Watts", 1000000, 0,
 							  500, 2000, scoring_inverted);
 
-	data.p_occ = prediction_constraint_create("RF-occupancy", 1000000, 0,
+	data.p_occ = prediction_constraint_create("RF-occupancy", "%", 1000000, 0,
 							  50, 100, scoring_inverted);
 
-	data.p_lat = prediction_constraint_create("nif-latency", 1000000, 0,
+	data.p_lat = prediction_constraint_create("nif-latency", "µs", 1000000, 0,
 							  5, 10, scoring_inverted);
 
 	data.scoring = score_simple_create();

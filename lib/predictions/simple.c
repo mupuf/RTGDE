@@ -31,7 +31,9 @@ prediction_list_t *prediction_simple_exec(prediction_t *p)
 		if (metric_is_empty(pos->base))
 			continue;
 
-		r = prediction_metric_result_create(metric_name(pos->base), scoring_normal);
+		r = prediction_metric_result_create(metric_name(pos->base),
+						    metric_unit(pos->base),
+						    scoring_normal);
 
 		/* read the history of the metric */
 		r->hsize = metric_history_size(pos->base);
