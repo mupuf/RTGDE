@@ -62,7 +62,6 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 
 	/* compute the average and variance of the size + wake up counts */
 	time_span = r_size->history[r_size->hsize - 1].time - r_size->history[0].time;
-	time_span = time_span > 0 ? time_span : 1;
 	for (i = 0; i < r_size->hsize; i++) {
 		sum_size += r_size->history[i].value;
 		sum_size_sq += r_size->history[i].value * r_size->history[i].value;
@@ -74,7 +73,10 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 	p_high = avr_size + packets_priv->confidence_factor * std_size;
 	p_average = avr_size;
 	p_low = avr_size - packets_priv->confidence_factor * std_size;
-	p_count = count * packets_priv->prediction_length / time_span;
+	if (time_span > 0)
+		p_count = count * packets_priv->prediction_length / time_span;
+	else
+		p_count = 1;
 
 	/* size metric */
 	graph_add_point((graph_t *)r_size->high, 0, p_high);
