@@ -34,9 +34,9 @@ typedef struct {
 	/* input */
 	metric_t *metric;
 	history_size_t hsize;
-	history_size_t hsize_used;
 	sample_t *history;
-	sample_t *history_used;
+	history_size_t history_start;
+	history_size_t history_stop;
 
 	/* prediction output */
 	const graph_t *high;

@@ -37,6 +37,8 @@ prediction_list_t *prediction_simple_exec(prediction_t *p)
 		r->hsize = metric_history_size(pos->base);
 		r->history = calloc(r->hsize, sizeof(sample_t));
 		r->hsize = metric_dump_history(pos->base, r->history, r->hsize);
+		r->history_start = 0;
+		r->history_stop = r->hsize;
 
 		graph_add_point((graph_t *)r->high, 0,
 				r->history[r->hsize - 1].value);

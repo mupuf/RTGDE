@@ -106,8 +106,8 @@ static void csv_log_pred(flowgraph_priv_t *f_priv)
 					pmr->name);
 
 				/* dump the history */
-				last_sample_time = pmr->history[pmr->hsize - 1].time;
-				for (i = 0; i < pmr->hsize; i++) {
+				last_sample_time = pmr->history[pmr->history_stop - 1].time;
+				for (i = pmr->history_start; i < pmr->history_stop; i++) {
 					if (i > 0)
 						fprintf(f, "%" PRIi64 ", %i, , , ,\n",
 							pmr->history[i].time - 1 - last_sample_time,
@@ -193,8 +193,8 @@ static void csv_log_models(flowgraph_priv_t *f_priv, decision_input_t *di)
 
 			/* dump the history */
 			if (m->prediction->hsize > 0) {
-				last_sample_time = m->prediction->history[m->prediction->hsize - 1].time;
-				for (i = 0; i < m->prediction->hsize; i++) {
+				last_sample_time = m->prediction->history[m->prediction->history_stop - 1].time;
+				for (i = m->prediction->history_start; i < m->prediction->history_stop; i++) {
 					if (i > 0)
 						fprintf(f, "%" PRIi64 ", %i, , , ,\n",
 							m->prediction->history[i].time - 1 - last_sample_time,

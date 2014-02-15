@@ -44,6 +44,8 @@ prediction_list_t *prediction_average_exec(prediction_t *p)
 		r->hsize = metric_history_size(pos->base);
 		r->history = calloc(r->hsize, sizeof(sample_t));
 		r->hsize = metric_dump_history(pos->base, r->history, r->hsize);
+		r->history_start = 0;
+		r->history_stop = r->hsize;
 
 		/* compute the average and variance */
 		for (i = 0; i < r->hsize; i++) {

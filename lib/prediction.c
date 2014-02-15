@@ -32,6 +32,8 @@ prediction_metric_result_t *prediction_metric_result_create(const char *name,
 	pmr->metric = NULL;
 	pmr->hsize = 0;
 	pmr->history = NULL;
+	pmr->history_start = 0;
+	pmr->history_stop = 0;
 	pmr->high = graph_create();
 	pmr->average = graph_create();
 	pmr->low = graph_create();
@@ -79,6 +81,8 @@ prediction_metric_result_copy(prediction_metric_result_t *pmr)
 		memcpy(new_pmr->history, pmr->history, pmr->hsize * sizeof(sample_t));
 	} else
 		new_pmr->history = NULL;
+	new_pmr->history_start = pmr->history_start;
+	new_pmr->history_stop = pmr->history_stop;
 	new_pmr->high = graph_copy(pmr->high);
 	new_pmr->average = graph_copy(pmr->average);
 	new_pmr->low = graph_copy(pmr->low);
