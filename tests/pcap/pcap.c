@@ -199,7 +199,7 @@ void flowgraph_prediction_output_csv_cb(flowgraph_t *f,
 	const char *gnuplot_file = "../gnuplot/prediction.plot";
 
 	snprintf(cmd, sizeof(cmd),
-		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s %s'\" %s",
+		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s %s'\" %s  2> /dev/null > /dev/null",
 		 csv_filename, pmr_usage_hint_to_str(pmr->usage_hint),
 		 pmr->name, gnuplot_file);
 	system(cmd);
@@ -216,10 +216,9 @@ void flowgraph_model_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 	}
 
 	snprintf(cmd, sizeof(cmd),
-		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s'\" %s",
+		 "gnuplot -e \"filename='%s'\" -e \"graph_title='%s'\" %s 2> /dev/null > /dev/null",
 		 csv_filename, m->name, gnuplot_file);
 	system(cmd);
-
 }
 
 void decision_callback(flowgraph_t *f, decision_input_t *di,
