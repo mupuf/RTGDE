@@ -90,8 +90,8 @@ static void csv_log_pred(flowgraph_priv_t *f_priv)
 			int i;
 
 			snprintf(filename, sizeof(filename), f_priv->csv_pred_format,
-				 prediction_name(pos_p->base), pmr->name,
-				 f_priv->flowgraph_exec_count);
+				 f_priv->flowgraph_exec_count,
+				 prediction_name(pos_p->base), pmr->name);
 
 			FILE *f = fopen(filename, "w");
 			if (!f) {
@@ -173,8 +173,8 @@ static void csv_log_models(flowgraph_priv_t *f_priv, decision_input_t *di)
 			int i;
 
 			snprintf(filename, sizeof(filename), f_priv->csv_model_format,
-				 model_name(dim->model), m->name,
-				 f_priv->flowgraph_exec_count);
+				 f_priv->flowgraph_exec_count,
+				 model_name(dim->model), m->name);
 
 			FILE *f = fopen(filename, "w");
 			if (!f) {

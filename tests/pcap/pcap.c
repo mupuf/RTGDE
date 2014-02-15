@@ -221,6 +221,14 @@ void flowgraph_model_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 	system(cmd);
 }
 
+void generate_models_score()
+{
+	system("gnuplot -e \"filename='"DECISION_LOG_FILE"'\" -e "
+	       "\"graph_title='Evolution of the score of the WiFi and GSM models'\""
+	       " ../gnuplot/decision_log.plot");
+
+}
+
 void decision_callback(flowgraph_t *f, decision_input_t *di,
 		       decision_input_model_t *dim, void *user)
 {
@@ -249,14 +257,8 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 		wifi==dim?wifi->score:0, gsm==dim?gsm->score:0);
 	fflush(data.log_decision);
 	fsync(fileno(data.log_decision));
-}
 
-void generate_models_score()
-{
-	system("gnuplot -e \"filename='"DECISION_LOG_FILE"'\" -e "
-	       "\"graph_title='Evolution of the score of the WiFi and GSM models'\""
-	       "../gnuplot/decision_log.plot");
-
+	generate_models_score();
 }
 
 int main(int argc, char *argv[])
@@ -295,12 +297,12 @@ int main(int argc, char *argv[])
 	data.decision = decision_simple_create();
 	assert(data.decision );
 
-	data.m_rwifi = model_simple_radio_create("radio-wifi", 100000, 0.001, 0.001,
-						100, 20, 0.2, 0.3);
+	data.m_rwifi = model_simple_radio_create("radio-wifi", 480000, 0.001, 0.001,
+						50, 10, 0.2, 0.3);
 	assert(data.m_rwifi);
 
-	data.m_rgsm = model_simple_radio_create("radio-gsm", 10000, 0.001, 0.001,
-						100, 20, 0.01, 0.8);
+	data.m_rgsm = model_simple_radio_create("radio-gsm", 100000, 0.0001, 0.0001,
+						70, 15, 0.01, 0.8);
 	assert(data.m_rgsm);
 
 	data.f = flowgraph_create("nif selector", data.scoring, data.decision,
@@ -312,9 +314,9 @@ int main(int argc, char *argv[])
 	assert(!flowgraph_attach_model(data.f, data.m_rwifi));
 	assert(!flowgraph_attach_model(data.f, data.m_rgsm));
 
-	flowgraph_prediction_output_csv(data.f, "pcap_%s_%s_%i.csv",
+	flowgraph_prediction_output_csv(data.f, "pcap_%i_%s_%s.csv",
 					flowgraph_prediction_output_csv_cb);
-	flowgraph_model_output_csv(data.f, "pcap_model_%s_%s_%i.csv",
+	flowgraph_model_output_csv(data.f, "pcap_%i_model_%s_%s.csv",
 			     flowgraph_model_csv_cb);
 
 	do_work(argc, argv, data.me_pkt, 10000000);
@@ -334,8 +336,6 @@ int main(int argc, char *argv[])
 	prediction_delete(data.mp);
 
 	metric_delete(data.me_pkt);
-
-	generate_models_score();
 
 	return 0;
 }

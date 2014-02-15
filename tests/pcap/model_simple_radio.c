@@ -21,6 +21,7 @@ model_simple_radio_t * model_simple_radio(model_t* m)
 
 decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *input)
 {
+	static int count = 0;
 	model_simple_radio_t *msr = model_simple_radio(m);
 	prediction_metric_result_t *psize, *pcount, *ppower, *pocc, *plat;
 	const sample_t *packet_count, *s_size, *s_size_next;
@@ -74,7 +75,7 @@ decision_input_model_t * model_simple_radio_exec(model_t *m, prediction_list_t *
 	s_size_next = graph_read_next(psize->average, s_size);
 	while (s_size && s_size_next) {
 		int64_t time_diff = s_size_next->time - s_size->time;
-		uint32_t packet_count_interval = packet_count->value * time_diff / packet_count->time;
+		uint64_t packet_count_interval = packet_count->value * time_diff / packet_count->time;
 		int64_t rx_time = time_diff, tx_time, latency = 0;
 		sample_value_t rf_occupancy, card_latency, pwr;
 		float total_energy = 0.0;

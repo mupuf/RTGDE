@@ -3,6 +3,8 @@
 #include <string.h>
 #include <math.h>
 
+#define USE_N_LAST_US 2000000
+
 typedef struct {
 	sample_time_t prediction_length;
 	enum pred_avr_confidence_t confidence_factor;
@@ -26,7 +28,7 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 	sample_value_t p_high, p_average, p_low, p_count;
 	float avr_size, avr_sq_size, std_size;
 	metric_t *packets_m;
-	uint64_t time_span;
+	uint64_t time_end, time_span;
 	int i;
 
 	packets_m = prediction_find_metric(p, "packets");
@@ -54,6 +56,8 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 	r_size->hsize = metric_history_size(packets_m);
 	r_size->history = calloc(r_size->hsize, sizeof(sample_t));
 	r_size->hsize = metric_dump_history(packets_m, r_size->history, r_size->hsize);
+	r_size->hsize_used = 0;
+	r_size->history_used = NULL;
 
 	/*r_count->hsize = r_size->hsize;
 	r_count->history = calloc(r_count->hsize, sizeof(sample_t));
@@ -61,14 +65,25 @@ prediction_list_t *pred_packets_exec(prediction_t *p)
 
 
 	/* compute the average and variance of the size + wake up counts */
-	time_span = r_size->history[r_size->hsize - 1].time - r_size->history[0].time;
+	time_end = r_size->history[r_size->hsize - 1].time;
 	for (i = 0; i < r_size->hsize; i++) {
-		sum_size += r_size->history[i].value;
-		sum_size_sq += r_size->history[i].value * r_size->history[i].value;
-		count++;
+		if (!r_size->history_used && r_size->history[i].time >  time_end - USE_N_LAST_US) {
+			r_size->history_used = &r_size->history[i];
+			r_size->hsize_used = r_size->hsize - i;
+			if (i == 0)
+				time_span = time_end - r_size->history[i].time;
+			else
+				time_span = USE_N_LAST_US;
+		}
+
+		if (r_size->history_used) {
+			sum_size += r_size->history[i].value;
+			sum_size_sq += r_size->history[i].value * r_size->history[i].value;
+			count++;
+		}
 	}
-	avr_size = ((float)sum_size) / r_size->hsize;
-	avr_sq_size = ((float)sum_size_sq) / r_size->hsize;
+	avr_size = ((float)sum_size) / r_size->hsize_used;
+	avr_sq_size = ((float)sum_size_sq) / r_size->hsize_used;
 	std_size = sqrtf(avr_sq_size - (avr_size * avr_size));
 	p_high = avr_size + packets_priv->confidence_factor * std_size;
 	p_average = avr_size;

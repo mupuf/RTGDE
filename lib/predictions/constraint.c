@@ -79,6 +79,6 @@ prediction_t * prediction_constraint_create(const char *constraint_name,
 	return prediction_create(prediction_constraint_check,
 				 prediction_constraint_exec,
 				 prediction_constraint_dtor,
-				 "pred_constraint",
+				 "constraint",
 				 (void *)constraint);
 }
