@@ -497,8 +497,6 @@ void flowgraph_prediction_output_csv(flowgraph_t *f, const char *csv_filename_fo
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 
-	if (f_priv->csv_pred_cb)
-		free(f_priv->csv_pred_cb);
 	if (f_priv->csv_pred_format)
 		free(f_priv->csv_pred_format);
 
@@ -511,8 +509,6 @@ void flowgraph_model_output_csv(flowgraph_t *f, const char *csv_filename_format,
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 
-	if (f_priv->csv_model_format)
-		free(f_priv->csv_model_format);
 	if (f_priv->csv_model_format)
 		free(f_priv->csv_model_format);
 

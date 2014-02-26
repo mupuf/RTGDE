@@ -31,6 +31,11 @@ void *scoring_user(scoring_t *s);
 const char *scoring_name(scoring_t *s);
 int scoring_exec(scoring_t *s, decision_input_t *di);
 
+/** csv_filename_format have to have 2 parameters, the first is one is scoring's
+ * name (%s) and the second one is the metrics' name (%s).
+ */
+void scoring_output_csv(scoring_t *s, const char *csv_filename_format);
+
 #ifdef __cplusplus
 }
 #endif

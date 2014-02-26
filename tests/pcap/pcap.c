@@ -328,6 +328,7 @@ int main(int argc, char *argv[])
 					flowgraph_prediction_output_csv_cb);
 	flowgraph_model_output_csv(data.f, "pcap_%i_model_%s_%s.csv",
 			     flowgraph_model_csv_cb);
+	scoring_output_csv(data.scoring, "pcap_score_%s_%s.csv");
 
 	do_work(argc, argv, data.me_pkt, 10000000);
 

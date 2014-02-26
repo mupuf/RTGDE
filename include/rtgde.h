@@ -42,16 +42,16 @@ int flowgraph_detach_prediction(flowgraph_t *f, prediction_t * p);
 int flowgraph_attach_model(flowgraph_t *f, model_t * m);
 int flowgraph_detach_model(flowgraph_t *f, model_t * m);
 
-/* csv_filename_format have to have 2 parameters, the first is the prediction's
- * name (%s), then the metrics' name (%s) and the last is the number of time a
- * prediction has been made (%i),
+/* csv_filename_format have to have 3 parameters, the first is one is the number
+ * of time a prediction has been made (%i), then the prediction's name (%s) and
+ * finally the metrics' name (%s).
  */
 void flowgraph_prediction_output_csv(flowgraph_t *f, const char *csv_filename_format,
 			  flowgraph_prediction_output_csv_cb_t output_cb);
 
-/* csv_filename_format have to have 2 parameters, the first is the model's
- * name (%s), then the metrics' name (%s) and the last is the number of time a
- * decision has been made (%i),
+/* csv_filename_format have to have 3 parameters, the first is one is the number
+ * of time the model has been executed (%i), then the model's name (%s) and
+ * finally the metrics' name (%s).
  */
 void flowgraph_model_output_csv(flowgraph_t *f, const char *csv_filename_format,
 			  flowgraph_model_output_csv_cb_t output_cb);
