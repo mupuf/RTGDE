@@ -8,6 +8,7 @@ decision_input_t *decision_input_create()
 		return NULL;
 
 	INIT_LIST_HEAD(&di->models);
+	gettimeofday(&di->tv, NULL);
 
 	return di;
 }

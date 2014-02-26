@@ -3,6 +3,7 @@
 
 #include "list.h"
 #include "prediction.h"
+#include <sys/time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,6 +14,7 @@ typedef float score_t;
 
 typedef struct {
 	struct list_head models;
+	struct timeval tv;
 } decision_input_t;
 
 typedef struct {
