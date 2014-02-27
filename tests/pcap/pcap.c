@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+#include <signal.h>
 
 #include <predictions/pred_fsm.h>
 #include <predictions/constraint.h>
@@ -14,6 +15,8 @@
 #include "model_simple_radio.h"
 
 #define DECISION_LOG_FILE "pcap_decision_log.csv"
+
+volatile int request_quit = 0;
 
 struct flowgraph_data {
 	prediction_t * mp;
@@ -44,6 +47,12 @@ int64_t relative_time_us()
 int64_t timeval_to_us(struct timeval tv)
 {
 	return tv.tv_sec * 1000000 + tv.tv_usec;
+}
+
+void sig_request_quit(int signal)
+{
+	request_quit = 1;
+	fprintf(stderr, "preparing to quit!\n");
 }
 
 int capture_packets(metric_t * me, int64_t timeout_us)
@@ -78,7 +87,7 @@ int capture_packets(metric_t * me, int64_t timeout_us)
 
 	/* Grab a packet */
 	metric_update(me, 0, 0);
-	while (relative_time_us() < timeout_us) {
+	while (relative_time_us() < timeout_us && request_quit == 0) {
 		pcap_next(handle, &header);
 
 		metric_update(me, timeval_to_us(header.ts), header.len);
@@ -148,7 +157,7 @@ void read_from_file(metric_t * me, const char *filepath)
 	rtgde_start(data.f, 0);
 
 	int64_t last = 0, rel = 0;
-	while (!pcap_read_packet_header(finput, &pkt))
+	while (!pcap_read_packet_header(finput, &pkt) && request_quit == 0)
 	{
 		if (rel == 0)
 			rel = pkt.timestamp - relative_time_us();
@@ -290,6 +299,8 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	fprintf(data.log_decision, "time (µs), wifi model score, gsm model score, wifi selected, gsm selected\n");
+
+	signal(SIGINT, sig_request_quit);
 
 	data.mp = pred_packets_create(1000000, 2);
 	assert(data.mp);
