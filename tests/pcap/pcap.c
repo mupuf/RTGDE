@@ -162,7 +162,6 @@ void read_from_file(metric_t * me, const char *filepath)
 		}
 
 		metric_update(me, pkt.timestamp, pkt.len);
-
 	}
 }
 
@@ -237,6 +236,18 @@ void generate_models_score()
 	       "\"graph_title='Evolution of the score of the WiFi and GSM models'\""
 	       " ../gnuplot/decision_log.plot");
 
+}
+
+void scoring_output_csv_cb(scoring_t *s, const char *name, const char *csv_filename)
+{
+	char cmd[1024];
+
+	fprintf(stderr, "Gen %s\n", csv_filename);
+
+	snprintf(cmd, sizeof(cmd), "gnuplot -e \"filename='%s'\" -e "
+	       "\"graph_title='Evolution of the score of the WiFi and GSM models for the %s metric.'\""
+	       " ../gnuplot/decision_log.plot", csv_filename, name);
+	system(cmd);
 }
 
 void decision_callback(flowgraph_t *f, decision_input_t *di,
@@ -328,7 +339,7 @@ int main(int argc, char *argv[])
 					flowgraph_prediction_output_csv_cb);
 	flowgraph_model_output_csv(data.f, "pcap_%i_model_%s_%s.csv",
 			     flowgraph_model_csv_cb);
-	scoring_output_csv(data.scoring, "pcap_score_%s_%s.csv");
+	scoring_output_csv(data.scoring, "pcap_score_%s_%s.csv", scoring_output_csv_cb);
 
 	do_work(argc, argv, data.me_pkt, 10000000);
 
