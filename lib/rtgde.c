@@ -389,6 +389,7 @@ flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 	f_priv->user_cb_data = user_cb_data;
 	f_priv->name = strdup(name);
 
+	f_priv->csv_pred_format = NULL;
 	f_priv->csv_model_format = NULL;
 	f_priv->flowgraph_exec_count = 0;
 
@@ -568,6 +569,8 @@ void flowgraph_teardown(flowgraph_t *f)
 	}
 
 	free(f_priv->name);
+	if (f_priv->csv_pred_format)
+		free(f_priv->csv_pred_format);
 	if (f_priv->csv_model_format)
 		free(f_priv->csv_model_format);
 	free(f);
