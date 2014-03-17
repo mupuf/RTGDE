@@ -3,14 +3,16 @@ RTGDE
 
 A run-time generic decision-engine for power and performance management.
 
-== Dependencies ==
+Dependencies
+------------
 
 Here is the list of dependencies to compile RTGDE:
 
  - cmake 2.6+
  - libpcap (optional)
 
-== Compilation ==
+Compilation
+------------
 
 Just run the following commands:
 
@@ -20,11 +22,13 @@ Just run the following commands:
     $ cmake ..
     $ make
 
-== Documentation ==
+Documentation
+-------------
 
 WIP
 
-== Tests ==
+Tests
+-----
 
 RTGDE comes with multiple tests. Documentation for it will be written soon.
 
