@@ -1,5 +1,5 @@
 set datafile separator ','
-set term pngcairo size 800,600 enhanced font 'Verdana,9'
+set term pngcairo size 550,300 enhanced font 'Verdana,9'
 set output filename.".png"
 set autoscale
 #set offset graph 0.02, graph 0.02, graph 0.02, graph 0.02

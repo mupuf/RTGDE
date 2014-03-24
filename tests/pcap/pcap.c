@@ -301,6 +301,9 @@ int main(int argc, char *argv[])
 	fprintf(data.log_decision, "time (µs), wifi model score, gsm model score, wifi selected, gsm selected\n");
 
 	signal(SIGINT, sig_request_quit);
+	signal(SIGQUIT, sig_request_quit);
+	signal(SIGABRT, sig_request_quit);
+	signal(SIGTERM, sig_request_quit);
 
 	data.mp = pred_packets_create(1000000, 2);
 	assert(data.mp);
@@ -311,7 +314,7 @@ int main(int argc, char *argv[])
 	assert(!prediction_attach_metric(data.mp, data.me_pkt));
 
 	data.p_pwr = prediction_constraint_create("power", "Watts", 1000000, 0,
-							  500, 2000, scoring_inverted);
+							  500, 3000, scoring_inverted);
 
 	data.p_occ = prediction_constraint_create("RF-occupancy", "%", 1000000, 0,
 							  50, 100, scoring_inverted);
@@ -329,7 +332,7 @@ int main(int argc, char *argv[])
 	data.decision = decision_simple_create();
 	assert(data.decision );
 
-	data.m_rwifi = model_simple_radio_create("radio-wifi", 480000, 0.001, 0.001,
+	data.m_rwifi = model_simple_radio_create("radio-wifi", 4800000, 0.001, 0.001,
 						50, 10, 0.2, 0.3);
 	assert(data.m_rwifi);
 
