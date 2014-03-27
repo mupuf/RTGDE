@@ -31,9 +31,10 @@
 #include <predictions/pred_fsm.h>
 #include <predictions/constraint.h>
 #include <scoring/simple.h>
-#include <decision/simple.h>
+#include "pcap_decision.h"
 #include "pred_packets.h"
 #include "model_simple_radio.h"
+#include "utils.h"
 
 #define DECISION_LOG_FILE "pcap_decision_log.csv"
 
@@ -350,7 +351,7 @@ int main(int argc, char *argv[])
 	assert(scoring_metric_create(data.scoring, "RF occupency", 3));
 	assert(scoring_metric_create(data.scoring, "Emission latency", 5));
 
-	data.decision = decision_simple_create();
+	data.decision = decision_pcap_create();
 	assert(data.decision );
 
 	data.m_rwifi = model_simple_radio_create("radio-wifi", 4800000, 0.001, 0.001,

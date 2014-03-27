@@ -20,7 +20,6 @@
  */
 
 #include "decision.h"
-#include "../decision_priv.h"
 #include "decision/simple.h"
 #include <assert.h>
 
