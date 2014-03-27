@@ -46,6 +46,8 @@ const char *decision_name(decision_t *d);
 decision_input_model_t *decision_exec(decision_t *d, decision_input_t *di);
 void decision_delete(decision_t *d);
 
+void decision_output_csv(decision_t *d, const char *csv_filename);
+
 
 #ifdef __cplusplus
 }

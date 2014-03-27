@@ -22,9 +22,9 @@
 #include "decision_priv.h"
 #include <string.h>
 
-static decision_priv_t *decision_priv(decision_t *s)
+static decision_priv_t *decision_priv(decision_t *d)
 {
-	return (decision_priv_t *)s;
+	return (decision_priv_t *)d;
 }
 
 decision_t *decision_create(decision_exec_t exec, decision_dtor_t dtor,
@@ -67,4 +67,14 @@ void decision_delete(decision_t *d)
 		d_priv->dtor(d);
 	free((char *)d_priv->name);
 	free(d);
+}
+
+void decision_output_csv(decision_t *d, const char *csv_filename)
+{
+	decision_priv_t *d_priv = decision_priv(d);
+
+	if(d_priv->csv_filename)
+		free(d_priv->csv_filename);
+
+	d_priv->csv_filename = strdup(csv_filename);
 }

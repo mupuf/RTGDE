@@ -261,14 +261,6 @@ void flowgraph_model_csv_cb(flowgraph_t *f, decision_input_metric_t* m,
 	system(cmd);
 }
 
-void generate_models_score()
-{
-	system("gnuplot -e \"filename='"DECISION_LOG_FILE"'\" -e "
-	       "\"graph_title='Evolution of the score of the WiFi and GSM models'\""
-	       " ../gnuplot/decision_log.plot");
-
-}
-
 void scoring_output_csv_cb(scoring_t *s, const char *name, const char *csv_filename)
 {
 	char cmd[1024];
@@ -276,8 +268,8 @@ void scoring_output_csv_cb(scoring_t *s, const char *name, const char *csv_filen
 	fprintf(stderr, "Gen %s\n", csv_filename);
 
 	snprintf(cmd, sizeof(cmd), "gnuplot -e \"filename='%s'\" -e "
-	       "\"graph_title='Evolution of the score of the WiFi and GSM models for the %s metric.'\""
-	       " ../gnuplot/decision_log.plot", csv_filename, name);
+	       "\"graph_title='Score of the WiFi and GSM models for the %s metric.'\""
+	       " ../gnuplot/score_log.plot", csv_filename, name);
 	system(cmd);
 }
 
@@ -304,13 +296,15 @@ void decision_callback(flowgraph_t *f, decision_input_t *di,
 		return;
 	}
 
-	fprintf(data.log_decision, "%" PRIu64 ", %f, %f, %f, %f\n", relative_time_us(),
+	fprintf(data.log_decision, "%" PRIu64 ", %f, %f, %f, %f, 0\n", relative_time_us(),
 		wifi->score, gsm->score,
 		wifi==dim?wifi->score:0, gsm==dim?gsm->score:0);
 	fflush(data.log_decision);
 	fsync(fileno(data.log_decision));
 
-	generate_models_score();
+	system("gnuplot -e \"filename='"DECISION_LOG_FILE"'\" -e "
+	       "\"graph_title='Decision result for the WiFi and GSM models'\""
+	       " ../gnuplot/decision_log.plot");
 }
 
 int main(int argc, char *argv[])
@@ -320,7 +314,7 @@ int main(int argc, char *argv[])
 		perror("cannot open 'pcap_decision_log.csv'");
 		return 0;
 	}
-	fprintf(data.log_decision, "time (µs), wifi model score, gsm model score, wifi selected, gsm selected\n");
+	fprintf(data.log_decision, "time (µs), wifi model score, gsm model score, wifi selected, gsm selected, always 0\n");
 
 	signal(SIGINT, sig_request_quit);
 	signal(SIGQUIT, sig_request_quit);

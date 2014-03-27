@@ -30,6 +30,7 @@
 #include <models/dummy.h>
 #include <scoring/simple.h>
 #include <decision/simple.h>
+#include "utils.h"
 
 int64_t relative_time_us()
 {

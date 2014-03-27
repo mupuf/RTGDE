@@ -19,7 +19,5 @@ set xlabel "Time (µs)"
 set ylabel "Score of the different models"
 # TODO: Add units to metrics
 
-plot filename u 1:4:6 lw 1.5 lt rgb "red" title columnhead w filledcu above, \
-	'' u 1:5:6 lw 1.5 lt rgb "blue" title columnhead w filledcu above, \
-	'' u 1:2 lw 2 lt rgb "red" title columnhead with lines, \
+plot filename u 1:2 lw 2 lt rgb "red" title columnhead with lines, \
 	'' u 1:3 lw 1.5 lt rgb "blue" title columnhead with lines

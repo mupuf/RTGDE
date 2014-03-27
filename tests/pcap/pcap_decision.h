@@ -19,23 +19,20 @@
  * THE SOFTWARE.
  */
 
-#ifndef DECISION_PRIV_H
-#define DECISION_PRIV_H
+#ifndef DECISION_SIMPLE_H
+#define DECISION_SIMPLE_H
 
-#include "decision.h"
+#include <decision.h>
 
-typedef struct {
-	decision_t base;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-	void *user_cb_data;
+decision_t * decision_pcap_create();
 
-	decision_exec_t exec;
-	decision_dtor_t dtor;
+#ifdef __cplusplus
+}
+#endif
 
-	const char *name;
-	void *user;
+#endif
 
-	char *csv_filename;
-} decision_priv_t;
-
-#endif // DECISION_PRIV_H
