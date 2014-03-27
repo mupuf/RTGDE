@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <time.h>
 #include <assert.h>
 
 #include "rtgde.h"
@@ -82,15 +81,6 @@ typedef struct {
 flowgraph_priv_t *flowgraph_priv(const flowgraph_t *f)
 {
 	return (flowgraph_priv_t *) f;
-}
-
-int64_t clock_read_us()
-{
-	struct timespec tp;
-	if (clock_gettime(CLOCK_REALTIME, &tp))
-		return 0;
-
-	return tp.tv_sec * 1000000ULL + tp.tv_nsec / 1000;
 }
 
 static void csv_log_pred(flowgraph_priv_t *f_priv)

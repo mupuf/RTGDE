@@ -48,8 +48,6 @@ typedef void (*flowgraph_model_output_csv_cb_t)(flowgraph_t *f,
 					  decision_input_metric_t* m,
 					  const char *csv_filename);
 
-int64_t clock_read_us();
-
 flowgraph_t *flowgraph_create(const char *name, scoring_t *s, decision_t *d,
 			      flowgraph_callback_t user_cb, void *user_cb_data,
 			      uint64_t update_period_ns);
