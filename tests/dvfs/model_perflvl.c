@@ -27,6 +27,7 @@
 typedef struct {
 	size_t perflvl_cnt;
 	model_core_set_perflvl_t *perflvls;
+	size_t perflvl;
 } model_core_t;
 
 
@@ -85,6 +86,7 @@ decision_input_model_t * model_core_exec(model_t *m, prediction_list_t *input)
 
 		//if (p_avg == p_high)
 		p_chosen = p_high;
+		core->perflvl = p_chosen;
 
 		sample_value_t p_impact = core->perflvls[p_chosen].perf_impact * 100;
 		graph_add_point(o_cpu_usage, s_avg->time, p_impact);
@@ -145,8 +147,14 @@ model_t *model_core_set_create(const char *name, const model_core_set_perflvl_t 
 	for (i = 0; i < perflvl_cnt; i++) {
 		core->perflvls[i] = perflvls[i];
 	}
+	core->perflvl = 0;
 
 	return model_create(model_core_exec, model_core_delete,
 			    name, (void *)core);
 }
 
+size_t model_core_current_perflvl(const model_t *m)
+{
+	model_core_t *core = model_core((model_t *)m);
+	return core->perflvl;
+}

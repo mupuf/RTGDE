@@ -39,6 +39,8 @@
 #include <glibtop/cpu.h>
 
 #define DECISION_LOG_FILE "dvfs_decision_log.csv"
+#define PERFLVL_BIG_LOG_FILE "dvfs_big_perflvl.csv"
+#define PERFLVL_LITTLE_LOG_FILE "dvfs_little_perflvl.csv"
 
 volatile int request_quit = 0;
 
@@ -53,6 +55,8 @@ struct flowgraph_data {
 	flowgraph_t *f;
 
 	FILE *log_decision;
+	FILE *log_perflvl_big;
+	FILE *log_perflvl_little;
 } data;
 
 int64_t relative_time_us()
@@ -189,38 +193,54 @@ void scoring_output_csv_cb(scoring_t *s, const char *name, const char *csv_filen
 	system(cmd);
 }
 
+void generate_perflvl_changes(FILE *file, const model_t *m, const char *name, const char *csv_name, uint64_t timestamp)
+{
+	fprintf(file, "%" PRIu64 ", %zu\n", timestamp, model_core_current_perflvl(m));
+	fflush(file);
+
+	char cmd[1024];
+	snprintf(cmd, sizeof(cmd), "gnuplot -e \"filename='%s'\" -e "
+		 "\"graph_title='Evolution of the performance level of the %s model'\""
+		 " ../gnuplot/dvfs/perflvl_log.plot", csv_name, name);
+	system(cmd);
+}
+
 void decision_callback(flowgraph_t *f, decision_input_t *di,
 		       decision_input_model_t *dim, void *user)
 {
 	//struct flowgraph_data *d = (struct flowgraph_data*) user;
-	decision_input_model_t *wifi, *gsm;
+	decision_input_model_t *big, *little;
 
 	if (!dim) {
 		fprintf(stderr, "Callback decision: no decision has been made!\n");
 		return;
 	}
 
-	wifi = decision_input_model_get_by_name(di, "radio-wifi");
-	if (!wifi) {
-		fprintf(stderr, "wifi model not found!\n");
+	big = decision_input_model_get_by_name(di, "core-BIG");
+	if (!big) {
+		fprintf(stderr, "big model not found!\n");
 		return;
 	}
 
-	gsm = decision_input_model_get_by_name(di, "radio-gsm");
-	if (!gsm) {
-		fprintf(stderr, "gsm model not found!\n");
+	little = decision_input_model_get_by_name(di, "core-LITTLE");
+	if (!little) {
+		fprintf(stderr, "little model not found!\n");
 		return;
 	}
 
-	fprintf(data.log_decision, "%" PRIu64 ", %f, %f, %f, %f, 0\n", relative_time_us(),
-		wifi->score, gsm->score,
-		wifi==dim?wifi->score:0, gsm==dim?gsm->score:0);
+	uint64_t timestamp = relative_time_us();
+	fprintf(data.log_decision, "%" PRIu64 ", %f, %f, %f, %f, 0\n", timestamp,
+		big->score, little->score,
+		big==dim?big->score:0, little==dim?little->score:0);
 	fflush(data.log_decision);
 	fsync(fileno(data.log_decision));
 
 	system("gnuplot -e \"filename='"DECISION_LOG_FILE"'\" -e "
-	       "\"graph_title='Decision result for the WiFi and GSM models'\""
+	       "\"graph_title='Decision result for the BIG and LITTLE models'\""
 	       " ../gnuplot/dvfs/decision_log.plot");
+
+	generate_perflvl_changes(data.log_perflvl_big, big->model, "BIG", PERFLVL_BIG_LOG_FILE, timestamp);
+	generate_perflvl_changes(data.log_perflvl_little, little->model, "LITTLE", PERFLVL_LITTLE_LOG_FILE, timestamp);
 }
 
 int main(int argc, char *argv[])
@@ -231,6 +251,9 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	fprintf(data.log_decision, "time (µs), perflvl0 score, perflvl1 score, perflvl2 score, perflvl0 selected, perflvl1 selected, perflvl2 selected, always 0\n");
+
+	data.log_perflvl_big = fopen(PERFLVL_BIG_LOG_FILE, "w");
+	data.log_perflvl_little = fopen(PERFLVL_LITTLE_LOG_FILE, "w");
 
 	signal(SIGINT, sig_request_quit);
 	signal(SIGQUIT, sig_request_quit);
@@ -252,7 +275,7 @@ int main(int argc, char *argv[])
 	assert(data.scoring);
 
 	assert(scoring_metric_create(data.scoring, "Power consumption", 10));
-	assert(scoring_metric_create(data.scoring, "CPU usage", 15));
+	assert(scoring_metric_create(data.scoring, "CPU usage", 13));
 
 	data.decision = decision_dvfs_create();
 	assert(data.decision);

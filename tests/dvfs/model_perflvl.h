@@ -31,5 +31,6 @@ typedef struct {
 } model_core_set_perflvl_t;
 
 model_t * model_core_set_create(const char *name, const model_core_set_perflvl_t *perflvls, size_t perflvl_cnt);
+size_t model_core_current_perflvl(const model_t *m);
 
 #endif
