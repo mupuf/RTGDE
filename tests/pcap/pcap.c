@@ -28,7 +28,6 @@
 #include <inttypes.h>
 #include <signal.h>
 
-#include <predictions/pred_fsm.h>
 #include <predictions/constraint.h>
 #include <scoring/simple.h>
 #include "pcap_decision.h"
@@ -311,7 +310,7 @@ int main(int argc, char *argv[])
 {
 	data.log_decision = fopen(DECISION_LOG_FILE, "w");
 	if (!data.log_decision)  {
-		perror("cannot open 'pcap_decision_log.csv'");
+		perror("cannot open '" DECISION_LOG_FILE "'");
 		return 0;
 	}
 	fprintf(data.log_decision, "time (µs), wifi model score, gsm model score, wifi selected, gsm selected, always 0\n");

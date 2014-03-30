@@ -19,8 +19,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef DECISION_SIMPLE_H
-#define DECISION_SIMPLE_H
+#ifndef PCAP_DECISION_H
+#define PCAP_DECISION_H
 
 #include <decision.h>
 
