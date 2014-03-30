@@ -309,6 +309,8 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 
 		/* feed the ouput of prediction to each models */
 		dim = model_exec(pos_m->base, predictions);
+		if (!dim)
+			continue;
 
 		decision_input_add_model(di, dim);
 
@@ -352,6 +354,14 @@ static void *thread_flowgraph (void *p_data)
 	while (1) {
 		next_wakeup += f_priv->update_period_us;
 
+		int64_t s = next_wakeup - clock_read_us();
+		if (s > 0)
+			usleep(s);
+		else
+			fprintf(stderr,
+				"Warning: thread_flowgraph missed a tick by %lli us\n",
+				(long long int) -s);
+
 		/* disable cancelation while we are taking a decision */
 		s = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 		if (s != 0)
@@ -370,14 +380,6 @@ static void *thread_flowgraph (void *p_data)
 		/* schedule the next work, if we weren't run as one_time */
 		if (f_priv->one_time)
 			return NULL;
-
-		int64_t s = next_wakeup - clock_read_us();
-		if (s > 0)
-			usleep(s);
-		else
-			fprintf(stderr,
-				"Warning: thread_flowgraph missed a tick by %lli us\n",
-				(long long int) -s);
 	}
 	return NULL;
 }
