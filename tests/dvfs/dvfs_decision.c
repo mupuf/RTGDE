@@ -55,7 +55,7 @@ decision_input_model_t *decision_dvfs_calc(decision_t *d, decision_input_t *di)
 
 	if (dvfs->cur_core == LITTLE) {
 		dvfs->counter = 0;
-		if (big->score >= (little->score * 1.1))
+		if (big->score >= (little->score * 1.2))
 			dvfs->cur_core = BIG;
 	} else {
 		if (big->score <= (little->score * 1.1))

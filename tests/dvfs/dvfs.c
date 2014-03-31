@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 		perror("cannot open '" DECISION_LOG_FILE "'");
 		return 0;
 	}
-	fprintf(data.log_decision, "time (µs), perflvl0 score, perflvl1 score, perflvl2 score, perflvl0 selected, perflvl1 selected, perflvl2 selected, always 0\n");
+	fprintf(data.log_decision, "time (µs), BIG score, LITTLE score, BIG selected, LITTLE selected, always 0\n");
 
 	data.log_perflvl_big = fopen(PERFLVL_BIG_LOG_FILE, "w");
 	data.log_perflvl_little = fopen(PERFLVL_LITTLE_LOG_FILE, "w");
@@ -280,12 +280,12 @@ int main(int argc, char *argv[])
 	data.decision = decision_dvfs_create();
 	assert(data.decision);
 
-	model_core_set_perflvl_t perfs_big[2] = { { 100, 800, 0.25 }, { 150, 1000, 1.0 } };
-	data.m_big = model_core_set_create("core-BIG", perfs_big, 2);
+	model_core_set_perflvl_t perfs_big[] = { { 100, 800, 0.25 }, { 125, 900, 0.63 }, { 150, 1000, 1.0 } };
+	data.m_big = model_core_set_create("core-BIG", perfs_big, 3);
 	assert(data.m_big);
 
-	model_core_set_perflvl_t perfs_little[2] = { { 10, 200, 0.1 }, { 25, 500, 0.3 } };
-	data.m_little = model_core_set_create("core-LITTLE", perfs_little, 2);
+	model_core_set_perflvl_t perfs_little[] = { { 10, 200, 0.1 }, { 15, 300, 0.2 }, { 25, 500, 0.3 } };
+	data.m_little = model_core_set_create("core-LITTLE", perfs_little, 3);
 	assert(data.m_little);
 
 	data.f = flowgraph_create("core selector", data.scoring, data.decision,
