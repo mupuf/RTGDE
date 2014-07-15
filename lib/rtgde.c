@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 #include "rtgde.h"
 #include "list.h"
@@ -66,6 +67,7 @@ typedef struct {
 	scoring_t *scoring;
 	decision_t *decision;
 	pthread_t thread;
+	uint64_t start_time_us;
 	uint64_t update_period_us;
 	int one_time;
 
@@ -77,6 +79,15 @@ typedef struct {
 	flowgraph_prediction_output_csv_cb_t csv_pred_cb;
 	flowgraph_model_output_csv_cb_t csv_model_cb;
 	uint64_t flowgraph_exec_count;
+
+	/* Decision execution time */
+	uint32_t decision_exec_time_sum;
+	uint32_t decision_exec_time_sum_sq;
+
+	/* Update period */
+	uint32_t update_period_jitter_sum;
+	uint32_t update_period_jitter_sum_sq;
+	uint64_t update_period_miss;
 } flowgraph_priv_t;
 
 flowgraph_priv_t *flowgraph_priv(const flowgraph_t *f)
@@ -346,10 +357,19 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 static void *thread_flowgraph (void *p_data)
 {
 	flowgraph_priv_t *f_priv = (flowgraph_priv_t *)p_data;
-	int s;
+
+	/* init stats variables */
+	f_priv->decision_exec_time_sum = 0;
+	f_priv->decision_exec_time_sum_sq = 0;
+
+	f_priv->update_period_jitter_sum = 0;
+	f_priv->update_period_jitter_sum_sq = 0;
+
+	f_priv->update_period_miss = 0;
 
 	/* Get the clock */
-	int64_t next_wakeup = clock_read_us();
+	f_priv->start_time_us = clock_read_us();
+	int64_t next_wakeup = f_priv->start_time_us;
 
 	while (1) {
 		next_wakeup += f_priv->update_period_us;
@@ -357,10 +377,17 @@ static void *thread_flowgraph (void *p_data)
 		int64_t s = next_wakeup - clock_read_us();
 		if (s > 0)
 			usleep(s);
-		else
+		else {
 			fprintf(stderr,
 				"Warning: thread_flowgraph missed a tick by %lli us\n",
 				(long long int) -s);
+			f_priv->update_period_miss++;
+		}
+
+		/* update period statistics */
+		int64_t wakeup_jitter = clock_read_us() - next_wakeup;
+		f_priv->update_period_jitter_sum += wakeup_jitter;
+		f_priv->update_period_jitter_sum_sq += wakeup_jitter * wakeup_jitter;
 
 		/* disable cancelation while we are taking a decision */
 		s = pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
@@ -368,7 +395,12 @@ static void *thread_flowgraph (void *p_data)
 			die(s, "pthread_setcancelstate");
 
 		/* real work */
+		int64_t exec_before = clock_read_us();
 		execute_flow_graph(f_priv);
+		int64_t exec_time = clock_read_us() - exec_before;
+
+		f_priv->decision_exec_time_sum += exec_time;
+		f_priv->decision_exec_time_sum_sq += exec_time * exec_time;
 
 		f_priv->flowgraph_exec_count++;
 
@@ -547,6 +579,7 @@ int rtgde_start(flowgraph_t *f, int one_time)
 int rtgde_stop(flowgraph_t *f)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
+	float avr, avr_sq, std;
 
 	int s = pthread_cancel(f_priv->thread);
 	if (s != 0)
@@ -555,6 +588,29 @@ int rtgde_stop(flowgraph_t *f)
 	s = pthread_join(f_priv->thread, NULL);
 	if (s != 0)
 		return s;
+
+	fprintf(stderr, "\n<Flowgraph statistics>\nUpdate period = %"PRId64" µs, "
+		"Execution time = %.2f s, Decision count = %"PRId64", "
+		"late updates = %"PRId64" (%.3f%%)\n",
+		f_priv->update_period_us,
+		(clock_read_us() - f_priv->start_time_us) / 1e6,
+		f_priv->flowgraph_exec_count, f_priv->update_period_miss,
+		f_priv->update_period_miss * 1000.0 / f_priv->flowgraph_exec_count);
+
+	/* update period stats */
+	avr = 1.0 * f_priv->update_period_jitter_sum / f_priv->flowgraph_exec_count;
+	avr_sq = 1.0 * f_priv->update_period_jitter_sum_sq / f_priv->flowgraph_exec_count;
+	std = sqrtf(avr_sq - (avr * avr));
+	fprintf(stderr, "Update period jitter: avr = %+.02f µs, std = %.02f µs\n",
+		avr, std);
+
+	/* Decision execution time stats */
+	avr = 1.0 * f_priv->decision_exec_time_sum / f_priv->flowgraph_exec_count;
+	avr_sq = 1.0 * f_priv->decision_exec_time_sum_sq / f_priv->flowgraph_exec_count;
+	std = sqrtf(avr_sq - (avr * avr));
+	fprintf(stderr, "Decision execution time statistics: "
+		"avr = %.02f µs, std = %.02f µs, %.03f%% of the update period\n",
+		avr, std, avr * 100 / f_priv->update_period_us);
 
 	return 0;
 }
