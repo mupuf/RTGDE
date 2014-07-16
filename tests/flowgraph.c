@@ -19,6 +19,7 @@
  * THE SOFTWARE.
  */
 
+#undef NDEBUG
 #include <rtgde.h>
 #include <assert.h>
 #include <stdio.h>
