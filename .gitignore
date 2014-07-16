@@ -1,6 +1,5 @@
 *.csv
 *.png
-*.m
 *.plot
 *~
 build/
