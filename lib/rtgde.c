@@ -216,7 +216,7 @@ static void csv_log_models(flowgraph_priv_t *f_priv, decision_input_t *di)
 				m->score);
 
 			/* dump the history */
-			if (m->prediction->hsize > 0) {
+			if (m->prediction->hsize > 0 && m->prediction->history_stop >= 1) {
 				last_sample_time = m->prediction->history[m->prediction->history_stop - 1].time;
 				for (i = m->prediction->history_start; i < m->prediction->history_stop; i++) {
 					if (i > 0)
