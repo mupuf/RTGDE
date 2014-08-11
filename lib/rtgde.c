@@ -28,6 +28,7 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <sched.h>
 
 #include "rtgde.h"
 #include "list.h"
@@ -300,12 +301,20 @@ static void execute_flow_graph(flowgraph_priv_t *f_priv)
 	decision_input_model_t *dim;
 	decision_input_t *di = decision_input_create();
 	decision_input_model_t *dim_sel = NULL;
+	uint32_t pred_count = 0;
 
 	pthread_mutex_lock(&f_priv->config_mutex);
 
 	/* exec all attached predictions */
 	list_for_each_entry(pos_p, &f_priv->predictions, list) {
 		pos_p->last_prediction = prediction_exec(pos_p->base);
+		pred_count++;
+	}
+
+	if (pred_count == 0) {
+		fprintf(stderr,
+			"Warning: No predictions have been attached.\n");
+		return;
 	}
 
 	/* exec all the models */
@@ -580,6 +589,11 @@ int rtgde_stop(flowgraph_t *f)
 {
 	flowgraph_priv_t *f_priv = flowgraph_priv(f);
 	float avr, avr_sq, std;
+
+	if (f_priv->one_time) {
+		while(f_priv->flowgraph_exec_count < 1)
+			sched_yield();
+	}
 
 	int s = pthread_cancel(f_priv->thread);
 	if (s != 0)
