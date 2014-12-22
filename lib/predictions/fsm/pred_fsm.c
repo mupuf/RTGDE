@@ -173,8 +173,12 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 		r = prediction_metric_result_create(metric_name(pos->base),
 						    metric_unit(pos->base),
 						    scoring_normal);
-		r->hsize = hsize[i];
-		r->history = history[i];
+		/* read the history of the metric */
+		r->hsize = metric_history_size(pos->base);
+		r->history = calloc(r->hsize, sizeof(sample_t));
+		r->hsize = metric_dump_history(pos->base, r->history, r->hsize);
+		r->history_start = 0;
+		r->history_stop = r->hsize;
 
 		graph_add_point((graph_t *)r->high,
 				0,
@@ -199,8 +203,7 @@ prediction_list_t *prediction_fsm_exec(prediction_t *p)
 
 		prediction_list_append(pl, r);
 
-		/* do not free history[i] as it is also stored in
-		 * prediction_list. Free the metrics_name though. */
+		free(history[i]);
 		free(metrics_name[i]);
 
 		i++;

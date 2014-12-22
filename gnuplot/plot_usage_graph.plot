@@ -1,5 +1,5 @@
 set datafile separator ','
-set term pngcairo size 800,600
+set term pngcairo size 550,300 enhanced font 'Verdana,9'
 set autoscale
 set key autotitle columnhead
 set xlabel "Time (µs, step=1µs)"

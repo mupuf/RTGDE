@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
 	assert(!prediction_attach_metric(mp, me));
 	flowgraph_t *f = flowgraph_create("perflvl_decision", NULL, NULL,
-					  NULL, NULL, 1000000);
+					  NULL, NULL, 1000);
 	assert(!flowgraph_attach_prediction(f, mp));
 
 	model_t * m = model_dummy_create("dummy");
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
 	assert(!flowgraph_attach_model(f, m));
 
-	flowgraph_model_output_csv(f, "pred_graph_idle_%s_%s_%i.csv", NULL);
+	flowgraph_model_output_csv(f, "pred_graph_glxgears_%s_%s_%i.csv", NULL);
 
 	do_work(argc, argv, f, me);
 
